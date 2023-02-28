@@ -82,17 +82,45 @@ Salida: Primer ventana al iniciar el juego
     (define center-panel-left
         (new vertical-panel% [parent center-panel] [alignment '(left top)] [horiz-margin 5] [vert-margin 5]))
 
+    (define center-panel-center
+        (new horizontal-panel% [parent center-panel] [alignment '(center center)]))
+
+    (new vertical-panel% [parent center-panel] [alignment '(right top)] [horiz-margin 60])
+
+    (define center-panel-center-left
+        (new horizontal-panel% [parent center-panel-center] [alignment '(left bottom)]))
+
+    (define center-panel-center-center
+        (new horizontal-panel% [parent center-panel-center] [alignment '(center bottom)]))
+
+    (define center-panel-center-right
+        (new horizontal-panel% [parent center-panel-center] [alignment '(right bottom)] [horiz-margin 0]))
+
     (new message% [parent center-panel-left]
-                  [label "SELECT YOUR COLOR"])   
+                  [label "SELECT YOUR COLOR"])
+
+    ; blue-token
+    (new message% [parent center-panel-center-left]
+                  [label (read-bitmap "src\\resources\\blue-token.png")])
+
+    ; white-token
+    (new message% [parent center-panel-center-right]
+                  [label (read-bitmap "src\\resources\\white-token.png")])   
+
+    (define radio-box
+        (new radio-box% [parent center-panel-center-center]
+                        [label ""] 
+                        [choices (list "Blue               " "White")]
+                        [style '(horizontal)]
+                        [callback (λ (b e) (display "Test"))]))
 
     (define bottom-panel
         (new horizontal-panel% [parent start-panel] [alignment '(center bottom)]))
 
     ; Botón para llamar a la ventana de juego
     (new button% [parent bottom-panel]
-                 [label "Start Match"]
-                 [min-width 0]
-                 [min-height 0]
+                 [vert-margin 5]
+                 [label "        Start Match        "]
                  [callback (λ (b e) (on-play-button))])
 
     (define (on-play-button)
