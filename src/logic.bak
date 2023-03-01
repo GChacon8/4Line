@@ -12,16 +12,3 @@
 ; Combina generate-columns y generate-rows para crear la matriz
 (define (generate-array rows columns)
   (generate-rows rows (generate-columns columns '()) '()))
-
-; Revisa que no haya ceros en una lista especifica, en este caso representarian las filas
-(define (checkFullRow row)
-  (cond
-    ((null? row) #t)
-    ((equal? (car row) 0) #f)
-    (else (checkFullRow (cdr row)))))
-
-; Utiliza el revisaLlenoFila para revisar que todas las filas de la matriz no tengan cero
-(define (checkFull matrix)
-  (cond
-    ((equal? #t (checkFullRow (car matrix))) #t)
-    (else #f)))
