@@ -186,6 +186,7 @@ Salida: Primer ventana al iniciar el juego
     (define (on-play-button name dimensions)
         (validate-name name)
         (validate-dimensions dimensions)
+        (set-array)
         (create-init-board)
         (start-match))
 
@@ -198,7 +199,6 @@ Salida: Primer ventana al iniciar el juego
               ((equal? "Large (16x16)" dimensions) (set-rows-cols 16 16))))
 
     (define (create-init-board)
-        (set-array)
         (cond ((>= rows cols) (create-init-board-aux1))
               (else (create-init-board-aux2))))
 
@@ -380,6 +380,9 @@ Salida: Ventana de juego
         (new frame% [parent start-window] [label "4Line"] [width 800] [height 600]))
 
     ; Principales funciones de la ventana
+    (define (columns-choices num-cols)
+        (cond ((zero? num-cols) '())
+              (else (append (columns-choices (- num-cols 1)) (list (~v num-cols))))))
 
     ; Principal contenedor de la ventana
     (define game-pane
@@ -390,10 +393,44 @@ Salida: Ventana de juego
         (new horizontal-panel% [parent game-pane] [alignment '(center center)]))
     
     (define left-panel
-        (new vertical-panel% [parent game-panel] [alignment '(center bottom)] [horiz-margin 5] [vert-margin 5]))
+        (new vertical-panel% [parent game-panel] [alignment '(center center)] [horiz-margin 5] [vert-margin 5]))
+
+    (define left-panel-up
+        (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
+
+    (new message% [parent left-panel-up]
+                  [label "Players"])
+
+    (define left-panel-center
+        (new vertical-panel% [parent left-panel] [alignment '(center center)]))
+
+    (define left-panel-center1
+        (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
+
+    (new message% [parent left-panel-center1]
+                  [label (string-append player-name " -> ")])
+
+    (define choice1 (new choice%
+                    [label "Add at column: "]
+                    [parent left-panel-center1]
+                    [choices (columns-choices cols)]))
+
+    (define left-panel-center2
+        (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
+
+    (new message% [parent left-panel-center2]
+                  [label "Computer -> "])
+
+    (define choice2 (new choice%
+                    [label "Add at column: "]
+                    [parent left-panel-center2]
+                    [choices (columns-choices cols)]))
+
+    (define left-panel-down
+        (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
 
     ; Botón para regresar a la ventana de inicio
-    (new button% [parent left-panel]
+    (new button% [parent left-panel-down]
                  [label "Back"]
                  [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
 
