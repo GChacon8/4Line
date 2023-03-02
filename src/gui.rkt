@@ -199,7 +199,59 @@ Salida: Primer ventana al iniciar el juego
 
     (define (create-init-board)
         (set-array)
-        (define target (make-bitmap (* rows 40) (* cols 40)))
+        (cond ((>= rows cols) (create-init-board-aux1))
+              (else (create-init-board-aux2))))
+
+    (define (create-init-board-aux1)
+        (define target (make-bitmap (* rows 40) (* rows 40)))
+        (define dc (new bitmap-dc% [bitmap target]))
+        
+        (define (draw-board array)
+            (draw-board-aux array 0 0 5 5))
+
+        (define (draw-board-aux array rx ry cx cy)
+            (draw-in-bitmap array rx ry cx cy)
+            (cond ((null? array) (send target save-file "src\\resources\\init-board.png" 'png))
+                    (else (draw-board-aux (cdr array) 0 (+ ry 40) 4 (+ cy 40)))))
+
+        (define (draw-in-bitmap array rx ry cx cy)
+            (cond ((null? array) #f)
+                    (else (draw-in-bitmap-aux (car array) rx ry cx cy))))
+
+        (define (draw-in-bitmap-aux lst rx ry cx cy)
+            (add-cell lst rx ry cx cy)
+            (cond ((null? lst) #f)
+                    (else (draw-in-bitmap-aux (cdr lst) (+ rx 40) ry (+ cx 40) cy))))
+
+        (define (add-cell lst rx ry cx cy)
+            (cond ((null? lst) #f)
+                    ((equal? (car lst) 0) (draw-empty-cell rx ry))
+                    ((equal? (car lst) 1) (draw-blue-token rx ry cx cy))
+                    ((equal? (car lst) 2) (draw-white-token rx ry cx cy))))
+
+        (define (draw-empty-cell rx ry)
+            (send dc set-brush (make-object color% 70 130 180 1.0) 'solid)
+            (send dc set-pen "white" 1 'solid)
+            (send dc draw-rectangle rx ry 40 40))
+
+        (define (draw-blue-token rx ry cx cy)
+            (send dc set-brush (make-object color% 70 130 180 1.0) 'solid)
+            (send dc set-pen "white" 1 'solid)
+            (send dc draw-rectangle rx ry 40 40)
+            (send dc set-brush (make-object color% 0 150 255 1.0) 'solid)
+            (send dc draw-ellipse cx cy 30 30))
+
+        (define (draw-white-token rx ry cx cy)
+            (send dc set-brush (make-object color% 70 130 180 1.0) 'solid)
+            (send dc set-pen "white" 1 'solid)
+            (send dc draw-rectangle rx ry 40 40)
+            (send dc set-brush "white" 'solid)
+            (send dc draw-ellipse cx cy 30 30))
+
+        (draw-board array))
+
+    (define (create-init-board-aux2)
+        (define target (make-bitmap (* cols 40) (* cols 40)))
         (define dc (new bitmap-dc% [bitmap target]))
         
         (define (draw-board array)
