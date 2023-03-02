@@ -9,7 +9,8 @@
 (define possible-values '(8 9 10 11 12 13 14 15 16))
 (define rows 8)
 (define cols 8)
-(define array '(()))
+(define board '(()))
+(define current-panel 0)
 
 #|
 Nombre: set-player-name 
@@ -41,13 +42,22 @@ Salida: Dimensiones del tablero almacenadas
     (set! cols num-cols))
 
 #|
-Nombre: set-array
+Nombre: set-init-board
 Descripción: Crea una matriz de rows x cols vacia que representa el tablero al inicio de la partida
 Entradas: No tiene entrradas
 Salida: Matriz vacia con las dimensiones del tablero
 |#
-(define (set-array)
-    (set! array (generate-array rows cols)))
+(define (set-init-board)
+    (set! board (generate-array rows cols)))
+
+#|
+Nombre: update-board
+Descripción: Actualiza la matriz o tablero cuando o el jugador/PC agregan una nueva ficha
+Entradas: array -> Matriz con una nueva ficha agregada
+Salida: Tablero actualizado
+|#
+(define (update-board array)
+    (set! board array))
 
 ; Función principal
 #|
@@ -184,10 +194,10 @@ Salida: Primer ventana al iniciar el juego
 
     ; Verifica el nombre del jugador, las dimensiones del tablero y el color de la ficha antes de iniciar la partida
     (define (on-play-button name dimensions)
-        (validate-name name)
         (validate-dimensions dimensions)
-        (set-array)
-        (create-init-board)
+        (validate-name name)
+        (set-init-board)
+        (create-board)
         (start-match))
 
     (define (validate-name name)
@@ -198,11 +208,11 @@ Salida: Primer ventana al iniciar el juego
         (cond ((equal? "Default (8x8)" dimensions) (set-rows-cols 8 8))
               ((equal? "Large (16x16)" dimensions) (set-rows-cols 16 16))))
 
-    (define (create-init-board)
-        (cond ((>= rows cols) (create-init-board-aux1))
-              (else (create-init-board-aux2))))
+    (define (create-board)
+        (cond ((>= rows cols) (create-board-aux1))
+              (else (create-board-aux2))))
 
-    (define (create-init-board-aux1)
+    (define (create-board-aux1)
         (define target (make-bitmap (* rows 40) (* rows 40)))
         (define dc (new bitmap-dc% [bitmap target]))
         
@@ -248,9 +258,9 @@ Salida: Primer ventana al iniciar el juego
             (send dc set-brush "white" 'solid)
             (send dc draw-ellipse cx cy 30 30))
 
-        (draw-board array))
+        (draw-board board))
 
-    (define (create-init-board-aux2)
+    (define (create-board-aux2)
         (define target (make-bitmap (* cols 40) (* cols 40)))
         (define dc (new bitmap-dc% [bitmap target]))
         
@@ -296,7 +306,7 @@ Salida: Primer ventana al iniciar el juego
             (send dc set-brush "white" 'solid)
             (send dc draw-ellipse cx cy 30 30))
 
-        (draw-board array))
+        (draw-board board))
 
 ; Ventana de información
 #|
@@ -379,6 +389,13 @@ Salida: Ventana de juego
     (define game-window
         (new frame% [parent start-window] [label "4Line"] [width 800] [height 600]))
 
+    (define (update-center-panel game-panel panel)
+     (send game-panel delete-child panel)
+     (define center-panel (new vertical-panel% [parent game-panel] [alignment '(left center)]))
+     (new message% [parent center-panel]
+                   [label (read-bitmap "src\\resources\\init-board.png")])
+     (set! current-panel center-panel))
+
     ; Principales funciones de la ventana
     (define (columns-choices num-cols)
         (cond ((zero? num-cols) '())
@@ -413,7 +430,13 @@ Salida: Ventana de juego
     (define choice1 (new choice%
                     [label "Add at column: "]
                     [parent left-panel-center1]
-                    [choices (columns-choices cols)]))
+                    [choices (columns-choices cols)]
+                    [callback (λ (b e) (on-choice1 (+ (send choice1 get-selection) 1)) (send choice1 enable #f) (send choice2 enable #t))]))
+
+    (define (on-choice1 col-selection)
+        (update-board (add-token col-selection color-value board '()))
+        (create-board)
+        (update-center-panel game-panel current-panel))
 
     (define left-panel-center2
         (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
@@ -424,7 +447,14 @@ Salida: Ventana de juego
     (define choice2 (new choice%
                     [label "Add at column: "]
                     [parent left-panel-center2]
-                    [choices (columns-choices cols)]))
+                    [choices (columns-choices cols)]
+                    [enabled #f]
+                    [callback (λ (b e) (on-choice2 (+ (send choice2 get-selection) 1)) (send choice2 enable #f) (send choice1 enable #t))]))
+
+    (define (on-choice2 col-selection)
+        (update-board (add-token col-selection (if (equal? color-value 1) 2 1) board '()))
+        (create-board)
+        (update-center-panel game-panel current-panel))
 
     (define left-panel-down
         (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
@@ -435,19 +465,12 @@ Salida: Ventana de juego
                  [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
 
     (define center-panel
-        (new vertical-panel% [parent game-panel] [alignment '(center center)]))
+        (new vertical-panel% [parent game-panel] [alignment '(left center)]))
+    
+    (new message% [parent center-panel]
+                  [label (read-bitmap "src\\resources\\init-board.png")])
 
-    (define init-board
-        (new message% [parent center-panel]
-                      [label (read-bitmap "src\\resources\\init-board.png")]))
-
-    (define right-panel
-        (new horizontal-panel% [parent game-panel] [alignment '(center top)] [horiz-margin 5] [vert-margin 5]))
-
-    ; Botón para regresar a la ventana de inicio
-    (new button% [parent right-panel]
-                 [label "Restart Match"]
-                 [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
+    (set! current-panel center-panel)
 
     (send game-window show #t))
 
