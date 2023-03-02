@@ -13,39 +13,39 @@
 (define (generate-array rows columns)
   (generate-rows rows (generate-columns columns '()) '()))
 
-; Revisa que no haya ceros en una lista especifica, en este caso representarian las filas
-(define (isFullRow row)
+; Revisa que no haya ceros en una lista especifica
+(define (is-full-row? row)
   (cond
     ((null? row) #t)
     ((equal? (car row) 0) #f)
-    (else (isFullRow (cdr row)))))
+    (else (is-full-row? (cdr row)))))
 
-; Utiliza el revisaLlenoFila para revisar que todas las filas de la matriz no tengan cero
-(define (isFull matrix)
+; Utiliza el is-full-row? para revisar que todas las filas de la matriz no tengan cero
+(define (is-full? matrix)
   (cond
-    ((equal? #t (isFullRow (car matrix))) #t)
+    ((equal? #t (is-full-row? (car matrix))) #t)
     (else #f)))
 
 ; Revisa si el elemento especificado en una fila es igual a cero
-(define (isEmptyRow column row)
+(define (is-empty-row? column row)
   (cond
     ((equal? (list-ref row (- column 1)) 0) #t)
     (else #f)))
 
 ; Cambia el valor en la posicion dada por otro elemento especificado y retorna la lista con el cambio
-(define (changeElement position element listB listR)
+(define (change-element position element listB listR)
   (cond
     ((equal? position 1) (append listR (list element) (cdr listB)))
-    (else (changeElement (- position 1) element (cdr listB) (append listR (list(car listB)))))))
+    (else (change-element (- position 1) element (cdr listB) (append listR (list(car listB)))))))
 
 ; Retorna una lista sin su ultimo elemento
-(define (withoutTail lista)
+(define (without-tail lista)
   (reverse(cdr(reverse lista))))
 
 ; Realiza el movimiento especificado por un jugador en la columna dada, retornando la matriz con la jugada realizada
-(define (move column player matrix matrixP)
+(define (add-token column player matrix matrixP)
   (cond
-    ((isEmptyRow column (list-ref matrix (- (length matrix) 1))) (append (withoutTail matrix) (list(changeElement column player (list-ref matrix (- (length matrix) 1)) '())) matrixP))
-    (else (move column player (withoutTail matrix) (append (list(list-ref matrix (- (length matrix) 1))) matrixP)))))
+    ((is-empty-row? column (list-ref matrix (- (length matrix) 1))) (append (without-tail matrix) (list(change-element column player (list-ref matrix (- (length matrix) 1)) '())) matrixP))
+    (else (add-token column player (without-tail matrix) (append (list(list-ref matrix (- (length matrix) 1))) matrixP)))))
 
-;(move 2 1 '((0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 1 0 0 0 0 0 0)) '())
+;(add-token 2 1 '((0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 1 0 0 0 0 0 0)) '())
