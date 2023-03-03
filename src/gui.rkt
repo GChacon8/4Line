@@ -114,19 +114,22 @@ Salida: Primer ventana al iniciar el juego
         (new vertical-panel% [parent top-panel] [alignment '(right top)] [horiz-margin 5] [vert-margin 5]))
 
     (new message% [parent top-panel-left]
-                  [label "SETTINGS"])
+                  [label "SETTINGS"]
+                  [font (make-font  #:size 12 #:family 'swiss)])
 
     ; Widget para establecer el nombre del jugador que se enfrentará a la PC
     (define text-field
         (new text-field% [parent top-panel-center]
                          [label "Name:"]
-                         [init-value "You"]))
+                         [init-value "You"]
+                         [font (make-font #:size 10 #:family 'swiss)]))
 
     ; Widget para determinar las dimensiones del tablero
     (define combo-field
         (new combo-field% [parent top-panel-center]
                           [label "Field Size:"]
                           [init-value "Default (8x8)"]
+                          [font (make-font #:size 10 #:family 'swiss)]
                           [choices '("Default (8x8)" "Large (16x16)" "Other")]
                           [callback (λ (b e) (on-combo-field))]))
 
@@ -160,20 +163,42 @@ Salida: Primer ventana al iniciar el juego
         (new horizontal-panel% [parent center-panel-center] [alignment '(right bottom)]))
 
     (new message% [parent center-panel-left]
-                  [label "SELECT YOUR COLOR"])
+                  [label "SELECT YOUR COLOR"]
+                  [font (make-font #:size 12 #:family 'swiss)])
+
+    (define target1 (make-bitmap 50 50))
+    (define dc1 (new bitmap-dc% [bitmap target1]))
+    (send dc1 set-brush (make-object color% 70 130 180 1.0) 'transparent)
+    (send dc1 set-pen "white" 2 'transparent)
+    (send dc1 draw-rectangle 0 0 50 50)
+    (send dc1 set-brush (make-object color% 0 150 255 1.0) 'solid)
+    (send dc1 set-pen (make-object color% 0 150 255 1.0) 1 'solid)
+    (send dc1 draw-ellipse 4 5 40 40)
+    (send target1 save-file "src\\resources\\blue-token.png" 'png)
 
     ; blue-token
     (new message% [parent center-panel-center-left]
-                  [label (read-bitmap "src\\resources\\blue-token.png")])
+                  [label target1])
+
+    (define target2 (make-bitmap 50 50))
+    (define dc2 (new bitmap-dc% [bitmap target2]))
+    (send dc2 set-brush (make-object color% 70 130 180 1.0) 'transparent)
+    (send dc2 set-pen "white" 2 'transparent)
+    (send dc2 draw-rectangle 0 0 50 50)
+    (send dc2 set-brush "white" 'solid)
+    (send dc2 set-pen "white" 1 'solid)
+    (send dc2 draw-ellipse 4 5 40 40)
+    (send target2 save-file "src\\resources\\white-token.png" 'png)
 
     ; white-token
     (new message% [parent center-panel-center-right]
-                  [label (read-bitmap "src\\resources\\white-token.png")])   
+                  [label target2])   
 
     ; Widget para determinar con que color de ficha el jugador se enfretara con la PC
     (define radio-box
         (new radio-box% [parent center-panel-center-center]
-                        [label ""] 
+                        [label ""]
+                        [font (make-font #:size 10 #:family 'swiss)] 
                         [choices (list "Blue               " "White")]
                         [style '(horizontal)]
                         [callback (λ (b e) (on-radio-box))]))
@@ -186,10 +211,19 @@ Salida: Primer ventana al iniciar el juego
     (define bottom-panel
         (new horizontal-panel% [parent start-panel] [alignment '(center bottom)]))
 
+    (define target (make-bitmap 600 30))
+    (define dc (new bitmap-dc% [bitmap target]))
+    (send dc set-brush (make-object color% 0 250 154 1.0) 'solid)
+    (send dc set-pen (make-object color% 0 250 154 1.0) 2 'transparent)
+    (send dc draw-rectangle 0 0 600 30)
+    (send dc set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
+    (define-values (w h d a) (send dc get-text-extent "Start Match"))
+    (send dc set-text-foreground "white")
+    (send dc draw-text "Start Match" (/ (- 600 w) 2) (/ (- 30 h) 2))
+
     ; Botón para llamar a la ventana de juego
     (new button% [parent bottom-panel]
-                 [vert-margin 5]
-                 [label "        Start Match        "]
+                 [label target]
                  [callback (λ (b e) (on-play-button (send text-field get-value) (send combo-field get-value)))])
 
     ; Verifica el nombre del jugador, las dimensiones del tablero y el color de la ficha antes de iniciar la partida
@@ -249,6 +283,7 @@ Salida: Primer ventana al iniciar el juego
             (send dc set-pen "white" 1 'solid)
             (send dc draw-rectangle rx ry 40 40)
             (send dc set-brush (make-object color% 0 150 255 1.0) 'solid)
+            (send dc set-pen (make-object color% 0 150 255 1.0) 1 'solid)
             (send dc draw-ellipse cx cy 30 30))
 
         (define (draw-white-token rx ry cx cy)
@@ -297,6 +332,7 @@ Salida: Primer ventana al iniciar el juego
             (send dc set-pen "white" 1 'solid)
             (send dc draw-rectangle rx ry 40 40)
             (send dc set-brush (make-object color% 0 150 255 1.0) 'solid)
+            (send dc set-pen (make-object color% 0 150 255 1.0) 1 'solid)
             (send dc draw-ellipse cx cy 30 30))
 
         (define (draw-white-token rx ry cx cy)
@@ -389,17 +425,23 @@ Salida: Ventana de juego
     (define game-window
         (new frame% [parent start-window] [label "4Line"] [width 800] [height 600]))
 
-    (define (update-center-panel game-panel panel)
-     (send game-panel delete-child panel)
-     (define center-panel (new vertical-panel% [parent game-panel] [alignment '(left center)]))
-     (new message% [parent center-panel]
-                   [label (read-bitmap "src\\resources\\init-board.png")])
-     (set! current-panel center-panel))
-
     ; Principales funciones de la ventana
+    (define (put-token-color pc)
+        (cond ((and pc (equal? color-value 1)) "src\\resources\\white-token.png")
+              ((and pc (equal? color-value 2)) "src\\resources\\blue-token.png")
+              ((and (not pc) (equal? color-value 1)) "src\\resources\\blue-token.png")
+              ((and (not pc) (equal? color-value 2)) "src\\resources\\white-token.png")))
+
     (define (columns-choices num-cols)
         (cond ((zero? num-cols) '())
               (else (append (columns-choices (- num-cols 1)) (list (~v num-cols))))))
+
+    (define (update-center-panel game-panel panel)
+        (send game-panel delete-child panel)
+        (define center-panel (new vertical-panel% [parent game-panel] [alignment '(left center)]))
+        (new message% [parent center-panel]
+                      [label (read-bitmap "src\\resources\\init-board.png")])
+        (set! current-panel center-panel))
 
     ; Principal contenedor de la ventana
     (define game-pane
@@ -425,6 +467,9 @@ Salida: Ventana de juego
         (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
 
     (new message% [parent left-panel-center1]
+                  [label (read-bitmap (put-token-color #f))])
+
+    (new message% [parent left-panel-center1]
                   [label (string-append player-name " -> ")])
 
     (define choice1 (new choice%
@@ -440,6 +485,9 @@ Salida: Ventana de juego
 
     (define left-panel-center2
         (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
+
+    (new message% [parent left-panel-center2]
+                  [label (read-bitmap (put-token-color #t))])
 
     (new message% [parent left-panel-center2]
                   [label "Computer -> "])
