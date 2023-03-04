@@ -172,22 +172,22 @@
 
 ; Funcion Viabilidad: Selecciona los candidatos reales.
 (define (viabilidad matrix playerUsingIA)
-  (viabilidadAux matrix playerUsingIA (length (car matrix)) (length matrix) '()))
+  (viabilidad-aux matrix playerUsingIA (length (car matrix)) (length matrix) '()))
 
-(define (viabilidadAux matrix playerUsingIA columns rows candidatesList)
+(define (viabilidad-aux matrix playerUsingIA columns rows candidatesList)
   (cond ((= columns 0) (objetivo matrix playerUsingIA candidatesList '()))
-        ((= rows 0) (viabilidadAux matrix (- columns 1) (length matrix) candidatesList))
-        ((= (getElementIn columns rows matrix) 0) (viabilidadAux matrix playerUsingIA (- columns 1) (length matrix) (append candidatesList (list (list columns rows)))))
-        (else (viabilidadAux matrix playerUsingIA columns (- rows 1) candidatesList))))
+        ((= rows 0) (viabilidad-aux matrix (- columns 1) (length matrix) candidatesList))
+        ((= (getElementIn columns rows matrix) 0) (viabilidad-aux matrix playerUsingIA (- columns 1) (length matrix) (append candidatesList (list (list columns rows)))))
+        (else (viabilidad-aux matrix playerUsingIA columns (- rows 1) candidatesList))))
 
 ; Funcion Objetivo: Asigna una valoracion a cada uno de los candidatos viables.
 (define (objetivo matrix playerUsingIA candidatesList candidatesRankedList)
   (cond ((null? candidatesList) (seleccion matrix playerUsingIA candidatesRankedList))
-        (else (objetivo matrix playerUsingIA (cdr candidatesList) (append candidatesRankedList (objetivoAux matrix (car candidatesList) playerUsingIA))))))
+        (else (objetivo matrix playerUsingIA (cdr candidatesList) (append candidatesRankedList (objetivo-aux matrix (car candidatesList) playerUsingIA))))))
 
-(define (objetivoAux matrix candidateToRank playerUsingIA)
+(define (objetivo-aux matrix candidateToRank playerUsingIA)
   (cond ((connecting4 matrix (car candidateToRank) (car (cdr candidateToRank)) playerUsingIA) (list (append candidateToRank '(5))))
-        ((blockingRivalWin matrix (car candidateToRank) (car (cdr candidateToRank)) playerUsingIA) (list (append candidateToRank '(4))))
+        ((blocking-rivals-win matrix (car candidateToRank) (car (cdr candidateToRank)) playerUsingIA) (list (append candidateToRank '(4))))
         ((connecting3 matrix (car candidateToRank) (car (cdr candidateToRank)) playerUsingIA) (list (append candidateToRank '(3))))
         ((connecting2 matrix (car candidateToRank) (car (cdr candidateToRank)) playerUsingIA) (list (append candidateToRank '(2))))
         ((connecting1 matrix (car candidateToRank) (car (cdr candidateToRank)) playerUsingIA) (list (append candidateToRank '(1))))
@@ -214,7 +214,7 @@
         ((= (+ (odd-diagonal-win-down column row matrix 0 playerUsingIA #t) (odd-diagonal-win-up column row matrix 0 playerUsingIA #t) 1) 3) #t)
         (else #f)))
 
-(define (blockingRivalWin matrix column row playerUsingIA)
+(define (blocking-rivals-win matrix column row playerUsingIA)
   (cond ((= playerUsingIA 1) (blockingRivalWinAux matrix column row 2))
         (else (blockingRivalWinAux matrix column row 1))))
 
@@ -235,13 +235,13 @@
 ; Funcion seleccion: Selecciona el mejor de los candidatos una vez han sido valorados.
 
 (define (seleccion matrix playerUsingIA candidatesRanked)
-  (seleccionAux matrix playerUsingIA (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
+  (seleccion-aux matrix playerUsingIA (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
 
-(define (seleccionAux matrix playerUsingIA bestCandidate bestRank candidate rank candidatesRanked)
+(define (seleccion-aux matrix playerUsingIA bestCandidate bestRank candidate rank candidatesRanked)
   (cond ((and (null? candidatesRanked) (> rank bestRank)) (solucion matrix playerUsingIA candidate))
         ((null? candidatesRanked) (solucion matrix playerUsingIA bestCandidate))
-        ((> rank bestRank) (seleccionAux candidate rank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
-        (else (seleccionAux matrix playerUsingIA bestCandidate bestRank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))))
+        ((> rank bestRank) (seleccion-aux matrix playerUsingIA candidate rank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
+        (else (seleccion-aux matrix playerUsingIA bestCandidate bestRank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))))
 
 
 ; Funcion solucion: Toma el mejor de los candidatos y modifica la matriz aplicando dicho candidato.
