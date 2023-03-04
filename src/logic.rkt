@@ -49,3 +49,109 @@
     (else (add-token column player (without-tail matrix) (append (list(list-ref matrix (- (length matrix) 1))) matrixP)))))
 
 ;(add-token 2 1 '((0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 1 0 0 0 0 0 0)) '())
+
+; Funcion que devuelve el valor en una posicion exacta de una matriz.
+(define (getElementIn column row matrix)
+  (cond ((or (null? matrix) (> row (length (car matrix))) (= row 0)) null)
+        ((> row 1) (getElementIn column (- row 1) (cdr matrix)))
+        (else (getElementIn-Aux column (car matrix)))))
+
+(define (getElementIn-Aux column row)
+  (cond ((or (null? row) (> column (length row)) (= column 0)) null)
+        ((> column 1) (getElementIn-Aux (- column 1) (cdr row)))
+        (else (car row))))
+
+; Funcion candidatos.
+(define (candidatos matrix)
+  (candidatosAux matrix (length (car matrix)) (length matrix) '()))
+
+(define (candidatosAux matrix columns rows candidatesList)
+  (cond ((= columns 0) candidatesList)
+        ((= rows 0) (candidatosAux matrix (- columns 1) (length matrix) candidatesList))
+        ((= (getElementIn columns rows matrix) 0) (candidatosAux matrix (- columns 1) (length matrix) (append candidatesList (list (list columns rows)))))
+        (else (candidatosAux matrix columns (- rows 1) candidatesList))))
+
+;Vertical
+(define (vertical-win-up column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn column (+ row 1) matrix) player) (vertical-win-up column (+ row 1) matrix (+ cont 1) player flag))
+    (else (vertical-win-up column row matrix cont player #f))))
+
+(define (vertical-win-down column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn column (- row 1) matrix) player) (vertical-win-down column (- row 1) matrix (+ cont 1) player flag))
+    (else (vertical-win-down column row matrix cont player #f))))
+
+(define (vertical-win column row matrix player)
+  (cond
+  ((>= (+ (vertical-win-down column row matrix 0 player #t) (vertical-win-up column row matrix 0 player #t) 1) 4) #t)
+  (else #f)))
+
+;Horizontal
+(define (horizontal-win-up column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn (+ column 1) row matrix) player) (horizontal-win-up (+ column 1) row matrix (+ cont 1) player flag))
+    (else (horizontal-win-up column row matrix cont player #f))))
+
+(define (horizontal-win-down column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn (- column 1) row matrix) player) (horizontal-win-down (- column 1) row matrix (+ cont 1) player flag))
+    (else (horizontal-win-down column row matrix cont player #f))))
+
+(define (horizontal-win column row matrix player)
+  (cond
+  ((>= (+ (horizontal-win-down column row matrix 0 player #t) (horizontal-win-up column row matrix 0 player #t) 1) 4) #t)
+  (else #f)))
+
+;Diagonal par
+
+(define (pair-diagonal-win-up column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn (+ column 1) (+ row 1) matrix) player) (pair-diagonal-win-up (+ column 1) (+ row 1) matrix (+ cont 1) player flag))
+    (else (pair-diagonal-win-up column row matrix cont player #f))))
+
+(define (pair-diagonal-win-down column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn (- column 1) (- row 1) matrix) player) (pair-diagonal-win-down (- column 1) (- row 1) matrix (+ cont 1) player flag))
+    (else (pair-diagonal-win-down column row matrix cont player #f))))
+
+(define (pair-diagonal-win column row matrix player)
+  (cond
+  ((>= (+ (pair-diagonal-win-down column row matrix 0 player #t) (pair-diagonal-win-up column row matrix 0 player #t) 1) 4) #t)
+  (else #f)))
+
+;Diagonal impar
+
+(define (odd-diagonal-win-up column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn (- column 1) (+ row 1) matrix) player) (odd-diagonal-win-up (- column 1) (+ row 1) matrix (+ cont 1) player flag))
+    (else (odd-diagonal-win-up column row matrix cont player #f))))
+
+(define (odd-diagonal-win-down column row matrix cont player flag)
+  (cond
+    ((equal? cont 3) cont)
+    ((equal? flag #f) cont)
+    ((equal? (getElementIn (+ column 1) (- row 1) matrix) player) (odd-diagonal-win-down (+ column 1) (- row 1) matrix (+ cont 1) player flag))
+    (else (odd-diagonal-win-down column row matrix cont player #f))))
+
+(define (odd-diagonal-win column row matrix player)
+  (cond
+  ((>= (+ (odd-diagonal-win-down column row matrix 0 player #t) (odd-diagonal-win-up column row matrix 0 player #t) 1) 4) #t)
+  (else #f)))
+
+;(vertical-win 4 6 '((0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 2 1 0 0 0 0) (0 0 2 1 2 0 0 0) (0 0 1 1 2 0 0 0)) 1)
+(candidatos '((0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 2 1 0 0 0 0) (0 0 2 1 2 0 0 0) (0 0 1 1 2 0 0 0)))
