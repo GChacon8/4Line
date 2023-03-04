@@ -1,4 +1,3 @@
-#lang racket
 
 ; Genera una fila de la matriz solicitada, con la cantidad de columnas especificada
 (define (generate-columns columns lst)
@@ -80,7 +79,7 @@
         ((> column 1) (getElementIn-Aux (- column 1) (cdr row)))
         (else (car row))))
 
-;Vertical
+; Vertical
 (define (vertical-win-up column row matrix cont player flag)
   (cond
     ((equal? cont 3) cont)
@@ -100,7 +99,7 @@
   ((>= (+ (vertical-win-down column row matrix 0 player #t) (vertical-win-up column row matrix 0 player #t) 1) 4) #t)
   (else #f)))
 
-;Horizontal
+; Horizontal
 (define (horizontal-win-up column row matrix cont player flag)
   (cond
     ((equal? cont 3) cont)
@@ -120,8 +119,7 @@
   ((>= (+ (horizontal-win-down column row matrix 0 player #t) (horizontal-win-up column row matrix 0 player #t) 1) 4) #t)
   (else #f)))
 
-;Diagonal par
-
+; Diagonal par
 (define (pair-diagonal-win-up column row matrix cont player flag)
   (cond
     ((equal? cont 3) cont)
@@ -141,8 +139,7 @@
   ((>= (+ (pair-diagonal-win-down column row matrix 0 player #t) (pair-diagonal-win-up column row matrix 0 player #t) 1) 4) #t)
   (else #f)))
 
-;Diagonal impar
-
+; Diagonal impar
 (define (odd-diagonal-win-up column row matrix cont player flag)
   (cond
     ((equal? cont 3) cont)
@@ -163,27 +160,27 @@
   (else #f)))
 
 ; Greeady Algorythm
-
 (define (playsIA matrix playerUsingIA)
-  (viabilidad matrix playerUsingIA))
+  (viability matrix playerUsingIA))
 
-; Funcion Candidatos: Por sugerencia del profesor sobre el progreso realizado una vez hecha la consulta, se opto por omitir el paso de la funcion candidatos, ya que la funcion
-; viabilidad ya desempeña eficientemente el trabajo que deberian realizar ambas funciones por separado.
+; Funcion candidates: Por sugerencia del profesor sobre el progreso realizado una vez hecha la consulta, 
+; se opto por omitir el paso de la funcion candidates, ya que la funcion viability desempeña eficientemente 
+; el trabajo que deberian realizar ambas funciones por separado.
 
-; Funcion Viabilidad: Selecciona los candidatos reales.
-(define (viabilidad matrix playerUsingIA)
-  (viabilidad-aux matrix playerUsingIA (length (car matrix)) (length matrix) '()))
+; Funcion viability: selecciona los candidatos reales.
+(define (viability matrix playerUsingIA)
+  (viability-aux matrix playerUsingIA (length (car matrix)) (length matrix) '()))
 
-(define (viabilidad-aux matrix playerUsingIA columns rows candidatesList)
-  (cond ((= columns 0) (objetivo matrix playerUsingIA candidatesList '()))
-        ((= rows 0) (viabilidad-aux matrix (- columns 1) (length matrix) candidatesList))
-        ((= (getElementIn columns rows matrix) 0) (viabilidad-aux matrix playerUsingIA (- columns 1) (length matrix) (append candidatesList (list (list columns rows)))))
-        (else (viabilidad-aux matrix playerUsingIA columns (- rows 1) candidatesList))))
+(define (viability-aux matrix playerUsingIA columns rows candidatesList)
+  (cond ((= columns 0) (objective matrix playerUsingIA candidatesList '()))
+        ((= rows 0) (viability-aux matrix playerUsingIA (- columns 1) (length matrix) candidatesList))
+        ((= (getElementIn columns rows matrix) 0) (viability-aux matrix playerUsingIA (- columns 1) (length matrix) (append candidatesList (list (list columns rows)))))
+        (else (viability-aux matrix playerUsingIA columns (- rows 1) candidatesList))))
 
-; Funcion Objetivo: Asigna una valoracion a cada uno de los candidatos viables.
-(define (objetivo matrix playerUsingIA candidatesList candidatesRankedList)
-  (cond ((null? candidatesList) (seleccion matrix playerUsingIA candidatesRankedList))
-        (else (objetivo matrix playerUsingIA (cdr candidatesList) (append candidatesRankedList (objetivo-aux matrix (car candidatesList) playerUsingIA))))))
+; Funcion objective: Asigna una valoracion a cada uno de los candidatos viables.
+(define (objective matrix playerUsingIA candidatesList candidatesRankedList)
+  (cond ((null? candidatesList) (selection matrix playerUsingIA candidatesRankedList))
+        (else (objective matrix playerUsingIA (cdr candidatesList) (append candidatesRankedList (objetivo-aux matrix (car candidatesList) playerUsingIA))))))
 
 (define (objetivo-aux matrix candidateToRank playerUsingIA)
   (cond ((connecting4 matrix (car candidateToRank) (car (cdr candidateToRank)) playerUsingIA) (list (append candidateToRank '(5))))
@@ -215,10 +212,10 @@
         (else #f)))
 
 (define (blocking-rivals-win matrix column row playerUsingIA)
-  (cond ((= playerUsingIA 1) (blockingRivalWinAux matrix column row 2))
-        (else (blockingRivalWinAux matrix column row 1))))
+  (cond ((= playerUsingIA 1) (blocking-rival-win-aux matrix column row 2))
+        (else (blocking-rival-win-aux matrix column row 1))))
 
-(define (blockingRivalWinAux matrix column row playerUsingRival)
+(define (blocking-rival-win-aux matrix column row playerUsingRival)
   (cond ((>= (+ (vertical-win-down column row matrix 0 playerUsingRival #t) (vertical-win-up column row matrix 0 playerUsingRival #t) 1) 4) #t)
         ((>= (+ (horizontal-win-down column row matrix 0 playerUsingRival #t) (horizontal-win-up column row matrix 0 playerUsingRival #t) 1) 4) #t)
         ((>= (+ (pair-diagonal-win-down column row matrix 0 playerUsingRival #t) (pair-diagonal-win-up column row matrix 0 playerUsingRival #t) 1) 4) #t)
@@ -232,20 +229,17 @@
         ((>= (+ (odd-diagonal-win-down column row matrix 0 playerUsingIA #t) (odd-diagonal-win-up column row matrix 0 playerUsingIA #t) 1) 4) #t)
         (else #f)))
 
-; Funcion seleccion: Selecciona el mejor de los candidatos una vez han sido valorados.
+; Funcion selection: selecciona el mejor de los candidatos una vez han sido valorados.
+(define (selection matrix playerUsingIA candidatesRanked)
+  (selection-aux matrix playerUsingIA (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
 
-(define (seleccion matrix playerUsingIA candidatesRanked)
-  (seleccion-aux matrix playerUsingIA (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
+(define (selection-aux matrix playerUsingIA bestCandidate bestRank candidate rank candidatesRanked)
+  (cond ((and (null? candidatesRanked) (> rank bestRank)) (solution matrix playerUsingIA candidate))
+        ((null? candidatesRanked) (solution matrix playerUsingIA bestCandidate))
+        ((> rank bestRank) (selection-aux matrix playerUsingIA candidate rank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
+        (else (selection-aux matrix playerUsingIA bestCandidate bestRank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))))
 
-(define (seleccion-aux matrix playerUsingIA bestCandidate bestRank candidate rank candidatesRanked)
-  (cond ((and (null? candidatesRanked) (> rank bestRank)) (solucion matrix playerUsingIA candidate))
-        ((null? candidatesRanked) (solucion matrix playerUsingIA bestCandidate))
-        ((> rank bestRank) (seleccion-aux matrix playerUsingIA candidate rank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
-        (else (seleccion-aux matrix playerUsingIA bestCandidate bestRank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))))
-
-
-; Funcion solucion: Toma el mejor de los candidatos y modifica la matriz aplicando dicho candidato.
-
-(define (solucion matrix playerUsingIA bestCandidate)
+; Funcion solution: Toma el mejor de los candidatos y modifica la matriz aplicando dicho candidato.
+(define (solution matrix playerUsingIA bestCandidate)
   (cond ((= playerUsingIA 1) (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 1 matrix))
         (else (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 2 matrix))))

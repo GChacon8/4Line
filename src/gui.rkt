@@ -62,16 +62,12 @@ Salida: Tablero actualizado
 ; Función principal
 #|
 Nombre: 4Line
-Descripción: Función principal que verifica las dimensiones del tablero al iniciar el programa
-Entradas: rows -> Número de filas del tablero
-          columns -> Número de columnas del tablero
-Salida: Informa sobre las restricciones con respecto a las dimensiones del tablero y llama a la interfaz si
-        todo está correcto
+Descripción: Función principal que abre la ventana de inicio
+Entradas: No tiene entradas
+Salida: Ventana de inicio
 |#
-(define (4Line rows columns)
-    (cond ((and (< rows 8) (< columns 8) (display "The minimum size of the board must be 8x8")))
-          ((and (> rows 16) (> columns 16)) (display "The maximum size of the board must be 16x16"))
-          (else (interface))))
+(define (4Line)
+    (interface))
 
 ; Interfaz gráfica
 #|
@@ -115,7 +111,7 @@ Salida: Primer ventana al iniciar el juego
 
     (new message% [parent top-panel-left]
                   [label "SETTINGS"]
-                  [font (make-font  #:size 12 #:family 'swiss)])
+                  [font (make-font  #:size 10 #:family 'swiss)])
 
     ; Widget para establecer el nombre del jugador que se enfrentará a la PC
     (define text-field
@@ -164,7 +160,7 @@ Salida: Primer ventana al iniciar el juego
 
     (new message% [parent center-panel-left]
                   [label "SELECT YOUR COLOR"]
-                  [font (make-font #:size 12 #:family 'swiss)])
+                  [font (make-font #:size 10 #:family 'swiss)])
 
     (define target1 (make-bitmap 50 50))
     (define dc1 (new bitmap-dc% [bitmap target1]))
@@ -458,7 +454,8 @@ Salida: Ventana de juego
         (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
 
     (new message% [parent left-panel-up]
-                  [label "Players"])
+                  [label "PLAYERS"]
+                  [font (make-font  #:size 12 #:family 'swiss)])
 
     (define left-panel-center
         (new vertical-panel% [parent left-panel] [alignment '(center center)]))
@@ -470,18 +467,22 @@ Salida: Ventana de juego
                   [label (read-bitmap (put-token-color #f))])
 
     (new message% [parent left-panel-center1]
-                  [label (string-append player-name " -> ")])
+                  [label (string-append player-name " |")]
+                  [font (make-font  #:size 10 #:family 'swiss)])
 
     (define choice1 (new choice%
                     [label "Add at column: "]
+                    [font (make-font  #:size 10 #:family 'swiss)]
                     [parent left-panel-center1]
                     [choices (columns-choices cols)]
-                    [callback (λ (b e) (on-choice1 (+ (send choice1 get-selection) 1)) (send choice1 enable #f) (send choice2 enable #t))]))
+                    [callback (λ (b e) (send choice1 enable #f) (on-choice1 (+ (send choice1 get-selection) 1)))]))
 
     (define (on-choice1 col-selection)
         (update-board (add-token col-selection color-value board '()))
         (create-board)
-        (update-center-panel game-panel current-panel))
+        (update-center-panel game-panel current-panel)
+        (sleep/yield 1.5)
+        (play-pc (if (equal? color-value 1) 2 1)))
 
     (define left-panel-center2
         (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
@@ -490,19 +491,14 @@ Salida: Ventana de juego
                   [label (read-bitmap (put-token-color #t))])
 
     (new message% [parent left-panel-center2]
-                  [label "Computer -> "])
+                  [label "Computer                             "]
+                  [font (make-font  #:size 10 #:family 'swiss)])
 
-    (define choice2 (new choice%
-                    [label "Add at column: "]
-                    [parent left-panel-center2]
-                    [choices (columns-choices cols)]
-                    [enabled #f]
-                    [callback (λ (b e) (on-choice2 (+ (send choice2 get-selection) 1)) (send choice2 enable #f) (send choice1 enable #t))]))
-
-    (define (on-choice2 col-selection)
-        (update-board (add-token col-selection (if (equal? color-value 1) 2 1) board '()))
+    (define (play-pc color-value-pc)
+        (update-board (playsIA board color-value-pc))
         (create-board)
-        (update-center-panel game-panel current-panel))
+        (update-center-panel game-panel current-panel)
+        (send choice1 enable #t))
 
     (define left-panel-down
         (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
@@ -524,4 +520,4 @@ Salida: Ventana de juego
 
 (send start-window show #t))
 
-(4Line 8 8)
+(4Line)
