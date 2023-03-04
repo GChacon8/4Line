@@ -51,6 +51,24 @@
 
 ;(add-token 2 1 '((0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 0 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 2 0 0 0 0 0 0) (0 1 0 0 0 0 0 0)) '())
 
+; Funcion que reemplaza el valor en una posicion exacta de una matriz, por un nuevo valor.
+(define (setElementIn column row newElement matrix)
+  (setElementIn-Aux1 column row newElement matrix '()))
+
+(define (setElementIn-Aux1 column row newElement matrix newMatrix)
+  (cond ((null? matrix) newMatrix)
+        ((> row (length (car matrix))) null)
+        ((> row 1) (setElementIn-Aux1 column (- row 1) newElement (cdr matrix) (append newMatrix (list (car matrix)))))
+        ((= row 1) (setElementIn-Aux1 column (- row 1) newElement (cdr matrix) (append newMatrix (list (setElementIn-Aux2 column (car matrix) newElement '())))))
+        (else (setElementIn-Aux1 column (- row 1) newElement (cdr matrix) (append newMatrix (list (car matrix)))))))
+
+(define (setElementIn-Aux2 column row newElement newRow)
+  (cond ((> column (length row)) null)
+        ((null? row) newRow)
+        ((> column 1) (setElementIn-Aux2 (- column 1) (cdr row) newElement (append newRow (list (car row)))))
+        ((= column 1) (setElementIn-Aux2 (- column 1) (cdr row) newElement (append newRow (list newElement))))
+        (else (setElementIn-Aux2 (- column 1) (cdr row) newElement (append newRow (list (car row)))))))
+
 ; Funcion que devuelve el valor en una posicion exacta de una matriz.
 (define (getElementIn column row matrix)
   (cond ((or (null? matrix) (> row (length (car matrix))) (= row 0)) null)
@@ -146,6 +164,9 @@
 
 ; Greeady Algorythm
 
+(define (playsIA matrix playerUsingIA)
+  (viabilidad matrix playerUsingIA))
+
 ; Funcion Candidatos: Por sugerencia del profesor sobre el progreso realizado una vez hecha la consulta, se opto por omitir el paso de la funcion candidatos, ya que la funcion
 ; viabilidad ya desempeña eficientemente el trabajo que deberian realizar ambas funciones por separado.
 
@@ -214,17 +235,17 @@
 ; Funcion seleccion: Selecciona el mejor de los candidatos una vez han sido valorados.
 
 (define (seleccion matrix playerUsingIA candidatesRanked)
-  (seleccionAux (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
+  (seleccionAux matrix playerUsingIA (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
 
-(define (seleccionAux bestCandidate bestRank candidate rank candidatesRanked)
-  (cond ((and (null? candidatesRanked) (> rank bestRank)) candidate)
-        ((null? candidatesRanked) bestCandidate)
+(define (seleccionAux matrix playerUsingIA bestCandidate bestRank candidate rank candidatesRanked)
+  (cond ((and (null? candidatesRanked) (> rank bestRank)) (solucion matrix playerUsingIA candidate))
+        ((null? candidatesRanked) (solucion matrix playerUsingIA bestCandidate))
         ((> rank bestRank) (seleccionAux candidate rank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
-        (else (seleccionAux bestCandidate bestRank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))))
+        (else (seleccionAux matrix playerUsingIA bestCandidate bestRank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))))
 
 
+; Funcion solucion: Toma el mejor de los candidatos y modifica la matriz aplicando dicho candidato.
 
-
-
-
-
+(define (solucion matrix playerUsingIA bestCandidate)
+  (cond ((= playerUsingIA 1) (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 1 matrix))
+        (else (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 2 matrix))))
