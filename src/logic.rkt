@@ -161,7 +161,7 @@
 
 ; Funcion Objetivo: Asigna una valoracion a cada uno de los candidatos viables.
 (define (objetivo matrix playerUsingIA candidatesList candidatesRankedList)
-  (cond ((null? candidatesList) candidatesRankedList)
+  (cond ((null? candidatesList) (seleccion matrix playerUsingIA candidatesRankedList))
         (else (objetivo matrix playerUsingIA (cdr candidatesList) (append candidatesRankedList (objetivoAux matrix (car candidatesList) playerUsingIA))))))
 
 (define (objetivoAux matrix candidateToRank playerUsingIA)
@@ -210,3 +210,21 @@
         ((>= (+ (pair-diagonal-win-down column row matrix 0 playerUsingIA #t) (pair-diagonal-win-up column row matrix 0 playerUsingIA #t) 1) 4) #t)
         ((>= (+ (odd-diagonal-win-down column row matrix 0 playerUsingIA #t) (odd-diagonal-win-up column row matrix 0 playerUsingIA #t) 1) 4) #t)
         (else #f)))
+
+; Funcion seleccion: Selecciona el mejor de los candidatos una vez han sido valorados.
+
+(define (seleccion matrix playerUsingIA candidatesRanked)
+  (seleccionAux (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
+
+(define (seleccionAux bestCandidate bestRank candidate rank candidatesRanked)
+  (cond ((and (null? candidatesRanked) (> rank bestRank)) candidate)
+        ((null? candidatesRanked) bestCandidate)
+        ((> rank bestRank) (seleccionAux candidate rank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))
+        (else (seleccionAux bestCandidate bestRank (reverse (cdr (reverse (car candidatesRanked)))) (car (reverse (car candidatesRanked))) (cdr candidatesRanked)))))
+
+
+
+
+
+
+
