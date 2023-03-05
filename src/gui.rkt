@@ -9,8 +9,10 @@
 (define possible-values '(8 9 10 11 12 13 14 15 16))
 (define rows 8)
 (define cols 8)
+(define play? #f)
 (define board '(()))
 (define current-row 0)
+(define current-col 0)
 (define current-panel 0)
 
 #|
@@ -88,7 +90,7 @@ Entradas: No tiene entradas
 Salida: Primer ventana al iniciar el juego
 |#
 (define start-window
-    (new frame% [label "Start Window"] [width 600] [height 300]))
+    (new frame% [label "Start Window"] [width 600] [height 250]))
 
     ; Principal contenedor de la ventana
     (define start-pane
@@ -112,7 +114,8 @@ Salida: Primer ventana al iniciar el juego
 
     (new message% [parent top-panel-left]
                   [label "SETTINGS"]
-                  [font (make-font  #:size 10 #:family 'swiss)])
+                  [font (make-font  #:size 10 #:family 'swiss #:weight 'bold)]
+                  [color (make-object color% 51 100 156 1.0)])
 
     ; Widget para establecer el nombre del jugador que se enfrentará a la PC
     (define text-field
@@ -134,9 +137,20 @@ Salida: Primer ventana al iniciar el juego
     (define (on-combo-field)
         (cond [(equal? (send combo-field get-value) "Other") (board-size-window start-window) (send combo-field set-value (string-append "Other (" (~v rows) "x" (~v cols) ")"))]))
 
+    ; Bitmap para botón About
+    (define about-target (make-bitmap 50 25))
+    (define about-dc (new bitmap-dc% [bitmap about-target]))
+    (send about-dc set-brush (make-object color% 51 100 156 1.0) 'solid)
+    (send about-dc set-pen (make-object color% 51 100 156 1.0) 2 'solid)
+    (send about-dc draw-rectangle 0 0 50 25)
+    (send about-dc set-font (make-font #:size 10 #:family 'swiss #:weight 'bold))
+    (define-values (wa ha da aa) (send about-dc get-text-extent "About"))
+    (send about-dc set-text-foreground "white")
+    (send about-dc draw-text "About" (/ (- 50 wa) 2) (/ (- 25 ha) 2))
+
     ; Botón para llamar a la ventana de información 
     (new button% [parent top-panel-right]
-                 [label "About"]
+                 [label about-target]
                  [callback (λ (b e) (about-window))])
     
     (define center-panel
@@ -161,35 +175,38 @@ Salida: Primer ventana al iniciar el juego
 
     (new message% [parent center-panel-left]
                   [label "SELECT YOUR COLOR"]
-                  [font (make-font #:size 10 #:family 'swiss)])
+                  [font (make-font #:size 10 #:family 'swiss #:weight 'bold)]
+                  [color (make-object color% 51 100 156 1.0)])
 
-    (define target1 (make-bitmap 50 50))
-    (define dc1 (new bitmap-dc% [bitmap target1]))
-    (send dc1 set-brush (make-object color% 70 130 180 1.0) 'transparent)
-    (send dc1 set-pen "white" 2 'transparent)
-    (send dc1 draw-rectangle 0 0 50 50)
-    (send dc1 set-brush (make-object color% 0 150 255 1.0) 'solid)
-    (send dc1 set-pen (make-object color% 0 150 255 1.0) 1 'solid)
-    (send dc1 draw-ellipse 4 5 40 40)
-    (send target1 save-file "src\\resources\\blue-token.png" 'png)
+    ; Bitmap para ficha azul
+    (define blue-target (make-bitmap 50 50))
+    (define blue-dc (new bitmap-dc% [bitmap blue-target]))
+    (send blue-dc set-brush (make-object color% 70 130 180 1.0) 'transparent)
+    (send blue-dc set-pen "white" 2 'transparent)
+    (send blue-dc draw-rectangle 0 0 50 50)
+    (send blue-dc set-brush (make-object color% 0 150 255 1.0) 'solid)
+    (send blue-dc set-pen (make-object color% 0 150 255 1.0) 1 'solid)
+    (send blue-dc draw-ellipse 4 5 40 40)
+    (send blue-target save-file "src\\resources\\blue-token.png" 'png)
 
-    ; blue-token
+    ; Color ficha azul
     (new message% [parent center-panel-center-left]
-                  [label target1])
+                  [label blue-target])
 
-    (define target2 (make-bitmap 50 50))
-    (define dc2 (new bitmap-dc% [bitmap target2]))
-    (send dc2 set-brush (make-object color% 70 130 180 1.0) 'transparent)
-    (send dc2 set-pen "white" 2 'transparent)
-    (send dc2 draw-rectangle 0 0 50 50)
-    (send dc2 set-brush "white" 'solid)
-    (send dc2 set-pen "white" 1 'solid)
-    (send dc2 draw-ellipse 4 5 40 40)
-    (send target2 save-file "src\\resources\\white-token.png" 'png)
+    ; Bitmap para ficha blanca
+    (define white-target (make-bitmap 50 50))
+    (define white-dc (new bitmap-dc% [bitmap white-target]))
+    (send white-dc set-brush (make-object color% 70 130 180 1.0) 'transparent)
+    (send white-dc set-pen "white" 2 'transparent)
+    (send white-dc draw-rectangle 0 0 50 50)
+    (send white-dc set-brush "white" 'solid)
+    (send white-dc set-pen "white" 1 'solid)
+    (send white-dc draw-ellipse 4 5 40 40)
+    (send white-target save-file "src\\resources\\white-token.png" 'png)
 
-    ; white-token
+    ; Color ficha blanca
     (new message% [parent center-panel-center-right]
-                  [label target2])   
+                  [label white-target])   
 
     ; Widget para determinar con que color de ficha el jugador se enfretara con la PC
     (define radio-box
@@ -208,22 +225,23 @@ Salida: Primer ventana al iniciar el juego
     (define bottom-panel
         (new horizontal-panel% [parent start-panel] [alignment '(center bottom)]))
 
-    (define target (make-bitmap 600 30))
-    (define dc (new bitmap-dc% [bitmap target]))
-    (send dc set-brush (make-object color% 0 250 154 1.0) 'solid)
-    (send dc set-pen (make-object color% 0 250 154 1.0) 2 'transparent)
-    (send dc draw-rectangle 0 0 600 30)
-    (send dc set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
-    (define-values (w h d a) (send dc get-text-extent "Start Match"))
-    (send dc set-text-foreground "white")
-    (send dc draw-text "Start Match" (/ (- 600 w) 2) (/ (- 30 h) 2))
+    ; Bitmap para botón Start Match
+    (define match-target (make-bitmap 600 30))
+    (define match-dc (new bitmap-dc% [bitmap match-target]))
+    (send match-dc set-brush (make-object color% 0 250 154 1.0) 'solid)
+    (send match-dc set-pen (make-object color% 0 250 154 1.0) 2 'solid)
+    (send match-dc draw-rectangle 0 0 600 30)
+    (send match-dc set-font (make-font #:size 16 #:family 'swiss #:weight 'bold))
+    (define-values (w h d a) (send match-dc get-text-extent "Start Match"))
+    (send match-dc set-text-foreground "white")
+    (send match-dc draw-text "Start Match" (/ (- 600 w) 2) (/ (- 30 h) 2))
 
     ; Botón para llamar a la ventana de juego
     (new button% [parent bottom-panel]
-                 [label target]
+                 [label match-target]
                  [callback (λ (b e) (on-play-button (send text-field get-value) (send combo-field get-value)))])
 
-    ; Verifica el nombre del jugador, las dimensiones del tablero y el color de la ficha antes de iniciar la partida
+    ; Función que valida el nombre del jugador y las dimensiones del tablero antes de iniciar la partida
     (define (on-play-button name dimensions)
         (validate-dimensions dimensions)
         (validate-name name)
@@ -385,26 +403,42 @@ Salida: Dimension del tablero que puede ser distinta a las de default
     (define top-panel (new horizontal-panel% [parent panel] [alignment '(center top)]))
     (define bottom-panel (new horizontal-panel% [parent panel] [alignment '(center bottom)]))
 
+    ; Widget para determinar el número de filas del tablero 
     (define choice1 (new choice%
                     [label "Rows:"]
                     [parent top-panel]
+                    [font (make-font #:size 10 #:family 'swiss)]
                     [choices (list "8" "9" "10" "11" "12" "13" "14" "15" "16")]
                     [callback (λ (b e) (on-choice1 (send choice1 get-selection)))]))
 
     (define (on-choice1 selection)
         (set-rows-cols (list-ref possible-values selection) cols))
 
+    ; Widget para determinar el número de columnas del tablero 
     (define choice2 (new choice%
-                    [label "Cols:"]
+                    [label "   Cols:"]
                     [parent top-panel]
+                    [font (make-font #:size 10 #:family 'swiss)]
                     [choices (list "8" "9" "10" "11" "12" "13" "14" "15" "16")]
                     [callback (λ (b e) (on-choice2 (send choice2 get-selection)))]))
 
     (define (on-choice2 selection)
         (set-rows-cols rows (list-ref possible-values selection)))
 
+    ; Bitmap para botón OK
+    (define ok-target (make-bitmap 60 25))
+    (define ok-dc (new bitmap-dc% [bitmap ok-target]))
+    (send ok-dc set-brush (make-object color% 0 250 154 1.0) 'solid)
+    (send ok-dc set-pen (make-object color% 0 250 154 1.0) 2 'solid)
+    (send ok-dc draw-rectangle 0 0 60 25)
+    (send ok-dc set-font (make-font #:size 10 #:family 'swiss #:weight 'bold))
+    (define-values (w h d a) (send ok-dc get-text-extent "OK"))
+    (send ok-dc set-text-foreground "white")
+    (send ok-dc draw-text "OK" (/ (- 60 w) 2) (/ (- 25 h) 2))
+
+    ; Botón para cerrar board-size-window
     (new button%  [parent bottom-panel]
-                  [label "OK"]
+                  [label ok-target]
                   [callback (λ (b e) (send board-size show #f))])
 
     (send board-size show #t))
@@ -420,24 +454,27 @@ Salida: Ventana de juego
     (send start-window show #f)
     
     (define game-window
-        (new frame% [parent start-window] [label "4Line"] [width 800] [height 600]))
+        (new frame% [parent start-window] [label "4Line"] [width 600] [height 370]))
 
     ; Principales funciones de la ventana
     ; Función para volver a empezar el juego
     (define (play-again)
         (send game-window show #f)
         (interface))
-        
+
+    ; Función que agrega el color de la ficha para el jugador y la PC
     (define (put-token-color pc)
         (cond ((and pc (equal? color-value 1)) "src\\resources\\white-token.png")
               ((and pc (equal? color-value 2)) "src\\resources\\blue-token.png")
               ((and (not pc) (equal? color-value 1)) "src\\resources\\blue-token.png")
               ((and (not pc) (equal? color-value 2)) "src\\resources\\white-token.png")))
 
+    ; Función que agrega al widget choices todas las posibles columnas que el jugador puede seleccionar
     (define (columns-choices num-cols)
         (cond ((zero? num-cols) '())
               (else (append (columns-choices (- num-cols 1)) (list (~v num-cols))))))
 
+    ; Función que actualiza el tablero cuando el jugador o la PC agregan una ficha
     (define (update-center-panel game-panel panel)
         (send game-panel delete-child panel)
         (define center-panel (new vertical-panel% [parent game-panel] [alignment '(left center)]))
@@ -460,8 +497,9 @@ Salida: Ventana de juego
         (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
 
     (new message% [parent left-panel-up]
-                  [label "PLAYERS"]
-                  [font (make-font  #:size 12 #:family 'swiss)])
+                  [label "Players"]
+                  [font (make-font  #:size 15 #:family 'swiss #:weight 'bold)]
+                  [color (make-object color% 51 100 156 1.0)])
 
     (define left-panel-center
         (new vertical-panel% [parent left-panel] [alignment '(center center)]))
@@ -469,13 +507,16 @@ Salida: Ventana de juego
     (define left-panel-center1
         (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
 
+    ; Colocar color de ficha para el jugador
     (new message% [parent left-panel-center1]
                   [label (read-bitmap (put-token-color #f))])
 
+    ; Colocar nombre del jugador
     (new message% [parent left-panel-center1]
                   [label (string-append player-name " |")]
                   [font (make-font  #:size 10 #:family 'swiss)])
 
+    ; Widget para determinar en cual columna el jugador va a agregar una ficha
     (define choice1 (new choice%
                     [label "Add at column: "]
                     [font (make-font  #:size 10 #:family 'swiss)]
@@ -483,42 +524,60 @@ Salida: Ventana de juego
                     [choices (columns-choices cols)]
                     [callback (λ (b e) (send choice1 enable #f) (on-choice1 (+ (send choice1 get-selection) 1)))]))
 
+    ; Función para actualizar el tablero cuando el jugador agrega una ficha
     (define (on-choice1 col-selection)
         (update-board (add-token col-selection color-value board '()))
         (create-board)
         (update-center-panel game-panel current-panel)
         (set! current-row (get-row-pos col-selection board 0 #f rows))
-        (cond ((win? col-selection current-row board (if (equal? color-value 1) 2 1)) (sleep/yield 0.5) (winner-window (string-append player-name " won the match!"))))
-        (sleep/yield 1.5)
-        (play-pc (if (equal? color-value 1) 2 1)))
+        (cond ((win? col-selection current-row board color-value) (sleep/yield 0.5) (send game-window enable #f) (winner-window game-window (string-append player-name " won the match!")) (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
+              (else (sleep/yield 1) (play-pc (if (equal? color-value 1) 2 1)))))
 
     (define left-panel-center2
         (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
 
+    ; Colocar color de ficha para PC
     (new message% [parent left-panel-center2]
                   [label (read-bitmap (put-token-color #t))])
 
+    ; Colocar nombre Computer
     (new message% [parent left-panel-center2]
                   [label "Computer                             "]
                   [font (make-font  #:size 10 #:family 'swiss)])
 
+    ; Función para actualizar el tablero cuando la PC agrega una ficha
     (define (play-pc color-value-pc)
-        (update-board (playsIA board color-value-pc))
+        (set! current-col (caadr (playsIA board color-value-pc)))
+        (set! current-row (cadadr (playsIA board color-value-pc)))
+        (update-board (car (playsIA board color-value-pc)))
         (create-board)
         (update-center-panel game-panel current-panel)
-        (send choice1 enable #t))
+        (cond ((win? current-col current-row board color-value-pc) (sleep/yield 0.5) (send game-window enable #f) (winner-window game-window "Computer won the match!") (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
+              (else (send choice1 enable #t))))
 
     (define left-panel-down
         (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
 
+    ; Bitmap para botón Back
+    (define back-target (make-bitmap 190 30))
+    (define back-dc (new bitmap-dc% [bitmap back-target]))
+    (send back-dc set-brush (make-object color% 220 20 60 1.0) 'solid)
+    (send back-dc set-pen (make-object color% 220 20 60 1.0) 2 'solid)
+    (send back-dc draw-rectangle 0 0 190 30)
+    (send back-dc set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
+    (define-values (wb hb db ab) (send back-dc get-text-extent "Back"))
+    (send back-dc set-text-foreground "white")
+    (send back-dc draw-text "Back" (/ (- 190 wb) 2) (/ (- 30 hb) 2))
+
     ; Botón para regresar a la ventana de inicio
     (new button% [parent left-panel-down]
-                 [label "Back"]
+                 [label back-target]
                  [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
 
     (define center-panel
         (new vertical-panel% [parent game-panel] [alignment '(left center)]))
     
+    ; Agregar tablero vacio
     (new message% [parent center-panel]
                   [label (read-bitmap "src\\resources\\init-board.png")])
     (set! current-panel center-panel)
@@ -530,40 +589,46 @@ Salida: Ventana de juego
               msj -> Mensaje que se mostrara en la ventana
     Salida: Ventana de gane o empate
     |#
-    (define (winner-window msj)
-    (define winner-dialog (new dialog% [label "Winner"] [width 400] [height 200]))
+    (define (winner-window place msj)
+    (define winner-dialog (new dialog% [parent place] [label "Winner"] [stretchable-width #f] [stretchable-height #f] [style '(no-caption)]))
     (define pane (new pane% [parent winner-dialog]))
     (define panel (new vertical-panel% [parent pane] [alignment '(center center)]))
-
-    (define h1-panel (new horizontal-panel% [parent panel] [alignment '(center bottom)]))
+    
+    (define h1-panel (new horizontal-panel% [parent panel] [alignment '(center center)] [vert-margin 20]))
     (new message% [parent h1-panel]
                   [label msj]
                   [font (make-font  #:size 16 #:family 'swiss)])
 
     (define h2-panel (new horizontal-panel% [parent panel] [alignment '(center bottom)]))
 
-    (define target10 (make-bitmap 200 30))
-    (define dc10 (new bitmap-dc% [bitmap target10]))
-    (send dc10 set-brush (make-object color% 0 250 154 1.0) 'solid)
-    (send dc10 set-pen (make-object color% 0 250 154 1.0) 2 'transparent)
-    (send dc10 draw-rectangle 0 0 200 30)
-    (send dc10 set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
-    (define-values (w10 h10 d10 a10) (send dc10 get-text-extent "Play Again"))
-    (send dc10 set-text-foreground "white")
-    (send dc10 draw-text "Play Again" (/ (- 200 w10) 2) (/ (- 30 h10) 2))
+    ; Bitmap para botón Play Again
+    (define play-target (make-bitmap 190 30))
+    (define play-dc (new bitmap-dc% [bitmap play-target]))
+    (send play-dc set-brush (make-object color% 0 250 154 1.0) 'solid)
+    (send play-dc set-pen (make-object color% 0 250 154 1.0) 2 'transparent)
+    (send play-dc draw-rectangle 0 0 190 30)
+    (send play-dc set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
+    (define-values (wp hp dp ap) (send play-dc get-text-extent "Play Again"))
+    (send play-dc set-text-foreground "white")
+    (send play-dc draw-text "Play Again" (/ (- 190 wp) 2) (/ (- 30 hp) 2))
 
-    (define target20 (make-bitmap 200 30))
-    (define dc20 (new bitmap-dc% [bitmap target20]))
-    (send dc20 set-brush (make-object color% 220 20 60 1.0) 'solid)
-    (send dc20 set-pen (make-object color% 220 20 60 1.0) 2 'transparent)
-    (send dc20 draw-rectangle 0 0 200 30)
-    (send dc20 set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
-    (define-values (w20 h20 d20 a20) (send dc20 get-text-extent "Exit"))
-    (send dc20 set-text-foreground "white")
-    (send dc20 draw-text "Exit" (/ (- 200 w20) 2) (/ (- 30 h20) 2))
+    (set! play? #f)
+    ; Botón para regresar a la ventana de inicio
+    (new button% [parent h2-panel] [label play-target] [callback (λ (b e) (send winner-dialog show #f) (set! play? #t) (play-again))])
 
-    (new button% [parent h2-panel] [label target10] [callback (λ (b e) (send winner-dialog show #f) (play-again))])
-    (new button% [parent h2-panel] [label target20] [callback (λ (b e) (send winner-dialog show #f) (send game-window show #f))])
+    ; Bitmap para botón Exit
+    (define exit-target (make-bitmap 190 30))
+    (define exit-dc (new bitmap-dc% [bitmap exit-target]))
+    (send exit-dc set-brush (make-object color% 220 20 60 1.0) 'solid)
+    (send exit-dc set-pen (make-object color% 220 20 60 1.0) 2 'transparent)
+    (send exit-dc draw-rectangle 0 0 190 30)
+    (send exit-dc set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
+    (define-values (we he de ae) (send exit-dc get-text-extent "Exit"))
+    (send exit-dc set-text-foreground "white")
+    (send exit-dc draw-text "Exit" (/ (- 190 we) 2) (/ (- 30 he) 2))
+
+    ; Botón para cerrar el programa
+    (new button% [parent h2-panel] [label exit-target] [callback (λ (b e) (send winner-dialog show #f) (set! play? #t) (send game-window show #f))])
 
     (send winner-dialog show #t))
 

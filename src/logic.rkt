@@ -1,4 +1,3 @@
-#lang racket
 
 ; Genera una fila de la matriz solicitada, con la cantidad de columnas especificada
 (define (generate-columns columns lst)
