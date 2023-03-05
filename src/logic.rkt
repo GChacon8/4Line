@@ -1,3 +1,4 @@
+#lang racket
 
 ; Genera una fila de la matriz solicitada, con la cantidad de columnas especificada
 (define (generate-columns columns lst)
@@ -253,5 +254,5 @@
 
 ; Funcion solution: Toma el mejor de los candidatos y modifica la matriz aplicando dicho candidato.
 (define (solution matrix playerUsingIA bestCandidate)
-  (cond ((= playerUsingIA 1) (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 1 matrix))
-        (else (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 2 matrix))))
+  (cond ((= playerUsingIA 1) (list (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 1 matrix) bestCandidate))
+        (else (list (setElementIn (car bestCandidate) (car (cdr bestCandidate)) 2 matrix) bestCandidate))))
