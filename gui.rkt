@@ -187,7 +187,7 @@ Salida: Primer ventana al iniciar el juego
     (send blue-dc set-brush (make-object color% 0 150 255 1.0) 'solid)
     (send blue-dc set-pen (make-object color% 0 150 255 1.0) 1 'solid)
     (send blue-dc draw-ellipse 4 5 40 40)
-    (send blue-target save-file "src\\resources\\blue-token.png" 'png)
+    (send blue-target save-file "resources\\blue-token.png" 'png)
 
     ; Color ficha azul
     (new message% [parent center-panel-center-left]
@@ -202,7 +202,7 @@ Salida: Primer ventana al iniciar el juego
     (send white-dc set-brush "white" 'solid)
     (send white-dc set-pen "white" 1 'solid)
     (send white-dc draw-ellipse 4 5 40 40)
-    (send white-target save-file "src\\resources\\white-token.png" 'png)
+    (send white-target save-file "resources\\white-token.png" 'png)
 
     ; Color ficha blanca
     (new message% [parent center-panel-center-right]
@@ -270,7 +270,7 @@ Salida: Primer ventana al iniciar el juego
 
         (define (draw-board-aux array rx ry cx cy)
             (draw-in-bitmap array rx ry cx cy)
-            (cond ((null? array) (send target save-file "src\\resources\\init-board.png" 'png))
+            (cond ((null? array) (send target save-file "resources\\init-board.png" 'png))
                     (else (draw-board-aux (cdr array) 0 (+ ry 40) 4 (+ cy 40)))))
 
         (define (draw-in-bitmap array rx ry cx cy)
@@ -319,7 +319,7 @@ Salida: Primer ventana al iniciar el juego
 
         (define (draw-board-aux array rx ry cx cy)
             (draw-in-bitmap array rx ry cx cy)
-            (cond ((null? array) (send target save-file "src\\resources\\init-board.png" 'png))
+            (cond ((null? array) (send target save-file "resources\\init-board.png" 'png))
                     (else (draw-board-aux (cdr array) 0 (+ ry 40) 4 (+ cy 40)))))
 
         (define (draw-in-bitmap array rx ry cx cy)
@@ -464,10 +464,10 @@ Salida: Ventana de juego
 
     ; Función que agrega el color de la ficha para el jugador y la PC
     (define (put-token-color pc)
-        (cond ((and pc (equal? color-value 1)) "src\\resources\\white-token.png")
-              ((and pc (equal? color-value 2)) "src\\resources\\blue-token.png")
-              ((and (not pc) (equal? color-value 1)) "src\\resources\\blue-token.png")
-              ((and (not pc) (equal? color-value 2)) "src\\resources\\white-token.png")))
+        (cond ((and pc (equal? color-value 1)) "resources\\white-token.png")
+              ((and pc (equal? color-value 2)) "resources\\blue-token.png")
+              ((and (not pc) (equal? color-value 1)) "resources\\blue-token.png")
+              ((and (not pc) (equal? color-value 2)) "resources\\white-token.png")))
 
     ; Función que agrega al widget choices todas las posibles columnas que el jugador puede seleccionar
     (define (columns-choices num-cols)
@@ -479,7 +479,7 @@ Salida: Ventana de juego
         (send game-panel delete-child panel)
         (define center-panel (new vertical-panel% [parent game-panel] [alignment '(left center)]))
         (new message% [parent center-panel]
-                      [label (read-bitmap "src\\resources\\init-board.png")])
+                      [label (read-bitmap "resources\\init-board.png")])
         (set! current-panel center-panel))
 
     ; Principal contenedor de la ventana
@@ -579,7 +579,7 @@ Salida: Ventana de juego
     
     ; Agregar tablero vacio
     (new message% [parent center-panel]
-                  [label (read-bitmap "src\\resources\\init-board.png")])
+                  [label (read-bitmap "resources\\init-board.png")])
     (set! current-panel center-panel)
 
     #|
