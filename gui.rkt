@@ -62,6 +62,16 @@ Salida: Tablero actualizado
 (define (update-board array)
     (set! board array))
 
+#|
+Nombre: columns-choices
+Descripción: Función que devuelve todas las posibles columnas que el jugador puede seleccionar
+Entradas: num-cols -> Número de fila
+Salida: Lista con el numero de columnas
+|#
+(define (columns-choices num-cols)
+    (cond ((zero? num-cols) '())
+          (else (append (columns-choices (- num-cols 1)) (list (~v num-cols))))))
+
 ; Función principal
 #|
 Nombre: 4Line
@@ -262,15 +272,26 @@ Salida: Primer ventana al iniciar el juego
               (else (create-board-aux2))))
 
     (define (create-board-aux1)
-        (define target (make-bitmap (* rows 40) (* rows 40)))
+        (define target (make-bitmap (* rows 40) (* (+ rows 1) 40)))
         (define dc (new bitmap-dc% [bitmap target]))
         
         (define (draw-board array)
             (draw-board-aux array 0 0 5 5))
 
+        (define (add-column-number lst reps rx ry)
+            (cond ((> reps cols) #f)
+                  (else (send dc set-brush "white" 'transparent)
+                        (send dc set-pen "white" 1 'transparent)
+                        (send dc draw-rectangle rx ry (* rows 40) 40)
+                        (send dc set-font (make-font #:size 16 #:family 'swiss))
+                        (define-values (w h d a) (send dc get-text-extent (car lst)))
+                        (send dc set-text-foreground "black")
+                        (send dc draw-text (car lst) (+ rx 12) (+ ry 6))
+                        (add-column-number (cdr lst) (+ reps 1) (+ rx 40) ry))))
+
         (define (draw-board-aux array rx ry cx cy)
             (draw-in-bitmap array rx ry cx cy)
-            (cond ((null? array) (send target save-file "resources\\init-board.png" 'png))
+            (cond ((null? array) (add-column-number (columns-choices cols) 1 rx ry) (send target save-file "resources\\init-board.png" 'png))
                     (else (draw-board-aux (cdr array) 0 (+ ry 40) 4 (+ cy 40)))))
 
         (define (draw-in-bitmap array rx ry cx cy)
@@ -317,9 +338,20 @@ Salida: Primer ventana al iniciar el juego
         (define (draw-board array)
             (draw-board-aux array 0 0 5 5))
 
+        (define (add-column-number lst reps rx ry)
+            (cond ((> reps cols) #f)
+                  (else (send dc set-brush "white" 'transparent)
+                        (send dc set-pen "white" 1 'transparent)
+                        (send dc draw-rectangle rx ry (* rows 40) 40)
+                        (send dc set-font (make-font #:size 16 #:family 'swiss))
+                        (define-values (w h d a) (send dc get-text-extent (car lst)))
+                        (send dc set-text-foreground "black")
+                        (send dc draw-text (car lst) (+ rx 12) (+ ry 6))
+                        (add-column-number (cdr lst) (+ reps 1) (+ rx 40) ry))))
+
         (define (draw-board-aux array rx ry cx cy)
             (draw-in-bitmap array rx ry cx cy)
-            (cond ((null? array) (send target save-file "resources\\init-board.png" 'png))
+            (cond ((null? array) (add-column-number (columns-choices cols) 1 rx ry) (send target save-file "resources\\init-board.png" 'png))
                     (else (draw-board-aux (cdr array) 0 (+ ry 40) 4 (+ cy 40)))))
 
         (define (draw-in-bitmap array rx ry cx cy)
@@ -454,7 +486,7 @@ Salida: Ventana de juego
     (send start-window show #f)
     
     (define game-window
-        (new frame% [parent start-window] [label "4Line"] [width 600] [height 370]))
+        (new frame% [parent start-window] [label "4Line"] [width 600] [height 400]))
 
     ; Principales funciones de la ventana
     ; Función para volver a empezar el juego
@@ -468,11 +500,6 @@ Salida: Ventana de juego
               ((and pc (equal? color-value 2)) "resources\\blue-token.png")
               ((and (not pc) (equal? color-value 1)) "resources\\blue-token.png")
               ((and (not pc) (equal? color-value 2)) "resources\\white-token.png")))
-
-    ; Función que agrega al widget choices todas las posibles columnas que el jugador puede seleccionar
-    (define (columns-choices num-cols)
-        (cond ((zero? num-cols) '())
-              (else (append (columns-choices (- num-cols 1)) (list (~v num-cols))))))
 
     ; Función que actualiza el tablero cuando el jugador o la PC agregan una ficha
     (define (update-center-panel game-panel panel)
@@ -494,25 +521,44 @@ Salida: Ventana de juego
         (new vertical-panel% [parent game-panel] [alignment '(center center)] [horiz-margin 5] [vert-margin 5]))
 
     (define left-panel-up
-        (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
+        (new vertical-panel% [parent left-panel] [alignment '(left top)]))
 
-    (new message% [parent left-panel-up]
+    ; Bitmap para botón Back
+    (define back-target (make-bitmap 50 25))
+    (define back-dc (new bitmap-dc% [bitmap back-target]))
+    (send back-dc set-brush (make-object color% 220 20 60 1.0) 'solid)
+    (send back-dc set-pen (make-object color% 220 20 60 1.0) 2 'solid)
+    (send back-dc draw-rectangle 0 0 50 25)
+    (send back-dc set-font (make-font #:size 10 #:family 'swiss #:weight 'bold))
+    (define-values (wb hb db ab) (send back-dc get-text-extent "Back"))
+    (send back-dc set-text-foreground "white")
+    (send back-dc draw-text "Back" (/ (- 50 wb) 2) (/ (- 25 hb) 2))
+
+    ; Botón para regresar a la ventana de inicio
+    (new button% [parent left-panel-up]
+                 [label back-target]
+                 [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
+
+    (define left-panel-center
+        (new vertical-panel% [parent left-panel] [alignment '(center center)] [vert-margin 75]))
+
+    (new message% [parent left-panel-center]
                   [label "Players"]
                   [font (make-font  #:size 15 #:family 'swiss #:weight 'bold)]
                   [color (make-object color% 51 100 156 1.0)])
 
-    (define left-panel-center
-        (new vertical-panel% [parent left-panel] [alignment '(center center)]))
+    (define left-panel-down
+        (new vertical-panel% [parent left-panel-center] [alignment '(center top)] [vert-margin 25]))
 
-    (define left-panel-center1
-        (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
+    (define left-panel-down1
+        (new horizontal-panel% [parent left-panel-down] [alignment '(center center)]))
 
     ; Colocar color de ficha para el jugador
-    (new message% [parent left-panel-center1]
+    (new message% [parent left-panel-down1]
                   [label (read-bitmap (put-token-color #f))])
 
     ; Colocar nombre del jugador
-    (new message% [parent left-panel-center1]
+    (new message% [parent left-panel-down1]
                   [label (string-append player-name " |")]
                   [font (make-font  #:size 10 #:family 'swiss)])
 
@@ -520,7 +566,7 @@ Salida: Ventana de juego
     (define choice1 (new choice%
                     [label "Add at column: "]
                     [font (make-font  #:size 10 #:family 'swiss)]
-                    [parent left-panel-center1]
+                    [parent left-panel-down1]
                     [choices (columns-choices cols)]
                     [callback (λ (b e) (send choice1 enable #f) (on-choice1 (+ (send choice1 get-selection) 1)))]))
 
@@ -533,15 +579,15 @@ Salida: Ventana de juego
         (cond ((win? col-selection current-row board color-value) (sleep/yield 0.5) (send game-window enable #f) (winner-window game-window (string-append player-name " won the match!")) (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
               (else (sleep/yield 1) (play-pc (if (equal? color-value 1) 2 1)))))
 
-    (define left-panel-center2
-        (new horizontal-panel% [parent left-panel-center] [alignment '(center center)]))
+    (define left-panel-down2
+        (new horizontal-panel% [parent left-panel-down] [alignment '(center center)]))
 
     ; Colocar color de ficha para PC
-    (new message% [parent left-panel-center2]
+    (new message% [parent left-panel-down2]
                   [label (read-bitmap (put-token-color #t))])
 
     ; Colocar nombre Computer
-    (new message% [parent left-panel-center2]
+    (new message% [parent left-panel-down2]
                   [label "Computer                             "]
                   [font (make-font  #:size 10 #:family 'swiss)])
 
@@ -554,25 +600,6 @@ Salida: Ventana de juego
         (update-center-panel game-panel current-panel)
         (cond ((win? current-col current-row board color-value-pc) (sleep/yield 0.5) (send game-window enable #f) (winner-window game-window "Computer won the match!") (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
               (else (send choice1 enable #t))))
-
-    (define left-panel-down
-        (new vertical-panel% [parent left-panel] [alignment '(center bottom)]))
-
-    ; Bitmap para botón Back
-    (define back-target (make-bitmap 190 30))
-    (define back-dc (new bitmap-dc% [bitmap back-target]))
-    (send back-dc set-brush (make-object color% 220 20 60 1.0) 'solid)
-    (send back-dc set-pen (make-object color% 220 20 60 1.0) 2 'solid)
-    (send back-dc draw-rectangle 0 0 190 30)
-    (send back-dc set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
-    (define-values (wb hb db ab) (send back-dc get-text-extent "Back"))
-    (send back-dc set-text-foreground "white")
-    (send back-dc draw-text "Back" (/ (- 190 wb) 2) (/ (- 30 hb) 2))
-
-    ; Botón para regresar a la ventana de inicio
-    (new button% [parent left-panel-down]
-                 [label back-target]
-                 [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
 
     (define center-panel
         (new vertical-panel% [parent game-panel] [alignment '(left center)]))
@@ -597,7 +624,7 @@ Salida: Ventana de juego
     (define h1-panel (new horizontal-panel% [parent panel] [alignment '(center center)] [vert-margin 20]))
     (new message% [parent h1-panel]
                   [label msj]
-                  [font (make-font  #:size 16 #:family 'swiss)])
+                  [font (make-font  #:size 12 #:family 'swiss)])
 
     (define h2-panel (new horizontal-panel% [parent panel] [alignment '(center bottom)]))
 
