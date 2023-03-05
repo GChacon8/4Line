@@ -79,6 +79,18 @@
         ((> column 1) (getElementIn-Aux (- column 1) (cdr row)))
         (else (car row))))
 
+; Funcion
+(define (get-row-pos column matrix coord-row flag rows)
+  (cond
+    ((equal? flag #t) (+ 1 (- rows coord-row)))
+    ((not (equal? 0 (list-ref (car(reverse matrix)) (- column 1)))) (get-row-pos column (without-tail matrix) (+ coord-row 1) flag rows))
+    (else (get-row-pos column matrix coord-row #t rows))))
+
+(define (win? column row matrix player)
+  (cond
+    ((or (odd-diagonal-win column row matrix player) (pair-diagonal-win column row matrix player) (vertical-win column row matrix player) (horizontal-win column row matrix player)) #t)
+    (else #f)))
+
 ; Vertical
 (define (vertical-win-up column row matrix cont player flag)
   (cond

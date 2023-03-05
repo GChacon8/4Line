@@ -10,6 +10,7 @@
 (define rows 8)
 (define cols 8)
 (define board '(()))
+(define current-row 0)
 (define current-panel 0)
 
 #|
@@ -422,6 +423,11 @@ Salida: Ventana de juego
         (new frame% [parent start-window] [label "4Line"] [width 800] [height 600]))
 
     ; Principales funciones de la ventana
+    ; Función para volver a empezar el juego
+    (define (play-again)
+        (send game-window show #f)
+        (interface))
+        
     (define (put-token-color pc)
         (cond ((and pc (equal? color-value 1)) "src\\resources\\white-token.png")
               ((and pc (equal? color-value 2)) "src\\resources\\blue-token.png")
@@ -481,6 +487,8 @@ Salida: Ventana de juego
         (update-board (add-token col-selection color-value board '()))
         (create-board)
         (update-center-panel game-panel current-panel)
+        (set! current-row (get-row-pos col-selection board 0 #f rows))
+        (cond ((win? col-selection current-row board (if (equal? color-value 1) 2 1)) (sleep/yield 0.5) (winner-window (string-append player-name " won the match!"))))
         (sleep/yield 1.5)
         (play-pc (if (equal? color-value 1) 2 1)))
 
@@ -513,8 +521,51 @@ Salida: Ventana de juego
     
     (new message% [parent center-panel]
                   [label (read-bitmap "src\\resources\\init-board.png")])
-
     (set! current-panel center-panel)
+
+    #|
+    Nombre: winner-window
+    Descripción: Ventana que indica quien ha ganado la partida o si hubo un empate entre el jugador y la PC
+    Entradas: place -> Lugar donde se colocará la ventana
+              msj -> Mensaje que se mostrara en la ventana
+    Salida: Ventana de gane o empate
+    |#
+    (define (winner-window msj)
+    (define winner-dialog (new dialog% [label "Winner"] [width 400] [height 200]))
+    (define pane (new pane% [parent winner-dialog]))
+    (define panel (new vertical-panel% [parent pane] [alignment '(center center)]))
+
+    (define h1-panel (new horizontal-panel% [parent panel] [alignment '(center bottom)]))
+    (new message% [parent h1-panel]
+                  [label msj]
+                  [font (make-font  #:size 16 #:family 'swiss)])
+
+    (define h2-panel (new horizontal-panel% [parent panel] [alignment '(center bottom)]))
+
+    (define target10 (make-bitmap 200 30))
+    (define dc10 (new bitmap-dc% [bitmap target10]))
+    (send dc10 set-brush (make-object color% 0 250 154 1.0) 'solid)
+    (send dc10 set-pen (make-object color% 0 250 154 1.0) 2 'transparent)
+    (send dc10 draw-rectangle 0 0 200 30)
+    (send dc10 set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
+    (define-values (w10 h10 d10 a10) (send dc10 get-text-extent "Play Again"))
+    (send dc10 set-text-foreground "white")
+    (send dc10 draw-text "Play Again" (/ (- 200 w10) 2) (/ (- 30 h10) 2))
+
+    (define target20 (make-bitmap 200 30))
+    (define dc20 (new bitmap-dc% [bitmap target20]))
+    (send dc20 set-brush (make-object color% 220 20 60 1.0) 'solid)
+    (send dc20 set-pen (make-object color% 220 20 60 1.0) 2 'transparent)
+    (send dc20 draw-rectangle 0 0 200 30)
+    (send dc20 set-font (make-font #:size 12 #:family 'swiss #:weight 'bold))
+    (define-values (w20 h20 d20 a20) (send dc20 get-text-extent "Exit"))
+    (send dc20 set-text-foreground "white")
+    (send dc20 draw-text "Exit" (/ (- 200 w20) 2) (/ (- 30 h20) 2))
+
+    (new button% [parent h2-panel] [label target10] [callback (λ (b e) (send winner-dialog show #f) (play-again))])
+    (new button% [parent h2-panel] [label target20] [callback (λ (b e) (send winner-dialog show #f) (send game-window show #f))])
+
+    (send winner-dialog show #t))
 
     (send game-window show #t))
 
