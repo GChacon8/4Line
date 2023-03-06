@@ -594,7 +594,7 @@ Salida: Ventana de juego
                     (send game-window enable #f)
                     (winner-window game-window "The match stayed tied!")
                     (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
-              (else (sleep/yield 1) 
+              (else (sleep/yield 1.5)
                     (pc-choice (if (equal? color-value 1) 2 1)))))
 
     (define (continue-playing)
