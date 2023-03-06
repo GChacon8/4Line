@@ -492,7 +492,7 @@ Salida: Ventana de juego
     ; Función para volver a empezar el juego
     (define (play-again)
         (send game-window show #f)
-        (interface))
+        (send start-window show #t))
 
     ; Función que agrega el color de la ficha para el jugador y la PC
     (define (put-token-color pc)
@@ -572,12 +572,35 @@ Salida: Ventana de juego
 
     ; Función para actualizar el tablero cuando el jugador agrega una ficha
     (define (on-choice1 col-selection)
+        (cond ((not (is-column-available? board col-selection))
+                    (sleep/yield 0.2)
+                    (send game-window enable #f)
+                    (warning-window game-window (string-append "Column " (~v col-selection) " is already full."))
+                    (if (and (not (send game-window is-enabled?)) (not play?)) (continue-playing) #t))
+              (else (player-choice col-selection))))
+
+    (define (player-choice col-selection)
         (update-board (add-token col-selection color-value board '()))
         (create-board)
         (update-center-panel game-panel current-panel)
         (set! current-row (get-row-pos col-selection board 0 #f rows))
-        (cond ((win? col-selection current-row board color-value) (sleep/yield 0.5) (send game-window enable #f) (winner-window game-window (string-append player-name " won the match!")) (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
-              (else (sleep/yield 1) (play-pc (if (equal? color-value 1) 2 1)))))
+        (cond ((win? col-selection current-row board color-value)
+                    (sleep/yield 0.5)
+                    (send game-window enable #f)
+                    (winner-window game-window (string-append player-name " won the match!"))
+                    (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
+              ((is-full? board)
+                    (sleep/yield 0.5)
+                    (send game-window enable #f)
+                    (winner-window game-window "The match stayed tied!")
+                    (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
+              (else (sleep/yield 1) 
+                    (pc-choice (if (equal? color-value 1) 2 1)))))
+
+    (define (continue-playing)
+        (send game-window show #t) 
+        (send game-window enable #t) 
+        (send choice1 enable #t))
 
     (define left-panel-down2
         (new horizontal-panel% [parent left-panel-down] [alignment '(center center)]))
@@ -592,15 +615,24 @@ Salida: Ventana de juego
                   [font (make-font  #:size 10 #:family 'swiss)])
 
     ; Función para actualizar el tablero cuando la PC agrega una ficha
-    (define (play-pc color-value-pc)
+    (define (pc-choice color-value-pc)
         (set! current-col (caadr (playsIA board color-value-pc)))
         (set! current-row (cadadr (playsIA board color-value-pc)))
         (update-board (car (playsIA board color-value-pc)))
         (create-board)
         (update-center-panel game-panel current-panel)
-        (cond ((win? current-col current-row board color-value-pc) (sleep/yield 0.5) (send game-window enable #f) (winner-window game-window "Computer won the match!") (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
+        (cond ((win? current-col current-row board color-value-pc) 
+                    (sleep/yield 0.5) 
+                    (send game-window enable #f) 
+                    (winner-window game-window "Computer won the match!") 
+                    (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
+              ((is-full? board)
+                    (sleep/yield 0.5)
+                    (send game-window enable #f)
+                    (winner-window game-window "The match stayed tied!")
+                    (if (and (not (send game-window is-enabled?)) (not play?)) (play-again) #t))
               (else (send choice1 enable #t))))
-
+              
     (define center-panel
         (new vertical-panel% [parent game-panel] [alignment '(left center)]))
     
@@ -613,7 +645,7 @@ Salida: Ventana de juego
     Nombre: winner-window
     Descripción: Ventana que indica quien ha ganado la partida o si hubo un empate entre el jugador y la PC
     Entradas: place -> Lugar donde se colocará la ventana
-              msj -> Mensaje que se mostrara en la ventana
+              msj -> Mensaje que se mostrará en la ventana
     Salida: Ventana de gane o empate
     |#
     (define (winner-window place msj)
@@ -658,6 +690,44 @@ Salida: Ventana de juego
     (new button% [parent h2-panel] [label exit-target] [callback (λ (b e) (send winner-dialog show #f) (set! play? #t) (send game-window show #f))])
 
     (send winner-dialog show #t))
+
+    #|
+    Nombre: warning-window
+    Descripción: Ventana que le indica al jugador que no puede agregar la ficha sobre una columna que ya esta llena
+    Entradas: place -> Lugar donde se colocará la ventana
+              msj -> Mensaje que se mostrará en la ventana
+    Salida: Ventana de advertencia
+    |#
+    (define (warning-window place msj)
+    (define warning-dialog (new dialog% [parent place] [label "Warning"] [stretchable-width #f] [stretchable-height #f] [style '(no-caption)]))
+    (define pane (new pane% [parent warning-dialog]))
+    (define panel (new vertical-panel% [parent pane] [alignment '(center center)]))
+    
+    (define h1-panel (new horizontal-panel% [parent panel] [alignment '(center center)] [horiz-margin 60] [vert-margin 10]))
+    (new message% [parent h1-panel]
+                  [label msj]
+                  [font (make-font  #:size 12 #:family 'swiss)])
+
+    (define h2-panel (new horizontal-panel% [parent panel] [alignment '(center bottom)]))
+
+    ; Bitmap para botón OK
+    (define ok-target (make-bitmap 60 25))
+    (define ok-dc (new bitmap-dc% [bitmap ok-target]))
+    (send ok-dc set-brush (make-object color% 0 250 154 1.0) 'solid)
+    (send ok-dc set-pen (make-object color% 0 250 154 1.0) 2 'solid)
+    (send ok-dc draw-rectangle 0 0 60 25)
+    (send ok-dc set-font (make-font #:size 10 #:family 'swiss #:weight 'bold))
+    (define-values (w h d a) (send ok-dc get-text-extent "OK"))
+    (send ok-dc set-text-foreground "white")
+    (send ok-dc draw-text "OK" (/ (- 60 w) 2) (/ (- 25 h) 2))
+
+    (set! play? #f)
+    ; Botón para cerrar board-size-window
+    (new button%  [parent h2-panel]
+                  [label ok-target]
+                  [callback (λ (b e) (send warning-dialog show #f) (set! play? #t) (send game-window show #t) (send game-window enable #t) (send choice1 enable #t))])
+
+    (send warning-dialog show #t))
 
     (send game-window show #t))
 

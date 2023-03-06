@@ -1,4 +1,3 @@
-#lang racket
 
 #|
 Nombre:
@@ -157,6 +156,7 @@ Salidas:
 |#
 (define (get-row-pos column matrix coord-row flag rows)
   (cond
+    ((not (equal? (get-element-in column 1 matrix) 0)) 1)
     ((equal? flag #t) (+ 1 (- rows coord-row)))
     ((not (equal? 0 (list-ref (car(reverse matrix)) (- column 1)))) (get-row-pos column (without-tail matrix) (+ coord-row 1) flag rows))
     (else (get-row-pos column matrix coord-row #t rows))))
@@ -277,8 +277,8 @@ Descripción: Funcion que verifica si una columna esta disponible para insertar 
 Entradas: 
 Salidas: 
 |#
-(define (is-column-available matrix column)
-  (cond ((= (get-element-in column 1) 0) #t)
+(define (is-column-available? matrix column)
+  (cond ((= (get-element-in column 1 matrix) 0) #t)
         (else #f)))
 
 #| ------------------------------------------------------------------------------- Greedy Algorythm ------------------------------------------------------------------------------- |#
