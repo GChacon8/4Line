@@ -161,7 +161,7 @@ Salida: Primer ventana al iniciar el juego
     ; Botón para llamar a la ventana de información 
     (new button% [parent top-panel-right]
                  [label about-target]
-                 [callback (λ (b e) (about-window))])
+                 [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (about-window))])
     
     (define center-panel
         (new horizontal-panel% [parent start-panel] [alignment '(center center)]))
@@ -249,7 +249,7 @@ Salida: Primer ventana al iniciar el juego
     ; Botón para llamar a la ventana de juego
     (new button% [parent bottom-panel]
                  [label match-target]
-                 [callback (λ (b e) (on-play-button (send text-field get-value) (send combo-field get-value)))])
+                 [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (on-play-button (send text-field get-value) (send combo-field get-value)))])
 
     ; Función que valida el nombre del jugador y las dimensiones del tablero antes de iniciar la partida
     (define (on-play-button name dimensions)
@@ -400,24 +400,35 @@ Salida: Ventana de información
 |#
 (define (about-window)
     (define about-dialog
-        (new dialog% [label "About"] [width 600] [height 300]))
+        (new dialog% [label "About"] [width 600] [height 520]))
 
     ; Principal contenedor de la ventana
     (define about-pane
         (new pane% [parent about-dialog]))
 
+    (new message% [parent about-pane]
+                  [label (read-bitmap "resources\\about-bg.png")])
+
     ; Distribución de la ventana
     (define about-panel
         (new vertical-panel% [parent about-pane] [alignment '(center center)]))
-    
-    (define label-panel
-        (new horizontal-panel% [parent about-panel] [alignment '(center center)]))
 
     (define button-panel
-        (new horizontal-panel% [parent about-panel] [alignment '(center bottom)] [vert-margin 5]))
+        (new horizontal-panel% [parent about-panel] [alignment '(center bottom)] [vert-margin 2]))
+
+    ; Bitmap para botón Back
+    (define back-target (make-bitmap 50 25))
+    (define back-dc (new bitmap-dc% [bitmap back-target]))
+    (send back-dc set-brush (make-object color% 220 20 60 1.0) 'solid)
+    (send back-dc set-pen (make-object color% 220 20 60 1.0) 2 'solid)
+    (send back-dc draw-rectangle 0 0 50 25)
+    (send back-dc set-font (make-font #:size 10 #:family 'swiss #:weight 'bold))
+    (define-values (wb hb db ab) (send back-dc get-text-extent "Back"))
+    (send back-dc set-text-foreground "white")
+    (send back-dc draw-text "Back" (/ (- 50 wb) 2) (/ (- 25 hb) 2))
 
     ; Botón para regresar a la ventana de inicio
-    (new button%  [parent button-panel] [label "Back"] [callback (λ (b e) (send about-dialog show #f))])   
+    (new button%  [parent button-panel] [label back-target] [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send about-dialog show #f))])   
         
     (send about-dialog show #t))
 
@@ -471,7 +482,7 @@ Salida: Dimension del tablero que puede ser distinta a las de default
     ; Botón para cerrar board-size-window
     (new button%  [parent bottom-panel]
                   [label ok-target]
-                  [callback (λ (b e) (send board-size show #f))])
+                  [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send board-size show #f))])
 
     (send board-size show #t))
 
@@ -537,7 +548,7 @@ Salida: Ventana de juego
     ; Botón para regresar a la ventana de inicio
     (new button% [parent left-panel-up]
                  [label back-target]
-                 [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
+                 [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send game-window show #f) (send start-window show #t))])
 
     (define left-panel-center
         (new vertical-panel% [parent left-panel] [alignment '(center center)] [vert-margin 75]))
@@ -582,6 +593,7 @@ Salida: Ventana de juego
     (define (player-choice col-selection)
         (update-board (add-token col-selection color-value board '()))
         (create-board)
+        (sleep/yield 0.01) (play-sound "resources\\add-token.wav" #t)
         (update-center-panel game-panel current-panel)
         (set! current-row (get-row-pos col-selection board 0 #f rows))
         (cond ((win? col-selection current-row board color-value)
@@ -620,6 +632,7 @@ Salida: Ventana de juego
         (set! current-row (cadadr (playsIA board color-value-pc)))
         (update-board (car (playsIA board color-value-pc)))
         (create-board)
+        (sleep/yield 0.01) (play-sound "resources\\add-token.wav" #t)
         (update-center-panel game-panel current-panel)
         (cond ((win? current-col current-row board color-value-pc) 
                     (sleep/yield 0.5) 
@@ -673,7 +686,7 @@ Salida: Ventana de juego
 
     (set! play? #f)
     ; Botón para regresar a la ventana de inicio
-    (new button% [parent h2-panel] [label play-target] [callback (λ (b e) (send winner-dialog show #f) (set! play? #t) (play-again))])
+    (new button% [parent h2-panel] [label play-target] [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send winner-dialog show #f) (set! play? #t) (play-again))])
 
     ; Bitmap para botón Exit
     (define exit-target (make-bitmap 190 30))
@@ -687,7 +700,7 @@ Salida: Ventana de juego
     (send exit-dc draw-text "Exit" (/ (- 190 we) 2) (/ (- 30 he) 2))
 
     ; Botón para cerrar el programa
-    (new button% [parent h2-panel] [label exit-target] [callback (λ (b e) (send winner-dialog show #f) (set! play? #t) (send game-window show #f))])
+    (new button% [parent h2-panel] [label exit-target] [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send winner-dialog show #f) (set! play? #t) (send game-window show #f))])
 
     (send winner-dialog show #t))
 
@@ -725,7 +738,7 @@ Salida: Ventana de juego
     ; Botón para cerrar board-size-window
     (new button%  [parent h2-panel]
                   [label ok-target]
-                  [callback (λ (b e) (send warning-dialog show #f) (set! play? #t) (send game-window show #t) (send game-window enable #t) (send choice1 enable #t))])
+                  [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send warning-dialog show #f) (set! play? #t) (send game-window show #t) (send game-window enable #t) (send choice1 enable #t))])
 
     (send warning-dialog show #t))
 
