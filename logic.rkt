@@ -1,9 +1,10 @@
 
 #|
-Nombre:
+Nombre: generate-columns
 Descripción: Genera una fila de la matriz solicitada, con la cantidad de columnas especificada
-Entradas: 
-Salidas: 
+Entradas: Columns: La cantidad de columnas que se quieren en la matriz
+          lst: lista vacia
+Salidas: Retorna una fila de la matriz con la cantidad de columnas especificadas
 |#
 (define (generate-columns columns lst)
   (cond ((equal? columns 0) (cons lst '()))
@@ -11,9 +12,11 @@ Salidas:
 
 
 #|
-Nombre:
+Nombre: generate-rows
 Descripción: Repite una fila encima de otra hasta saciar la cantidad de filas solicitada
-Entradas: 
+Entradas: rows: cantidad de filas que se desea en la matriz
+          lst: una fila de la matriz previamente hecha
+          array: la matriz nxm solicitada
 Salidas: 
 |#
 (define (generate-rows rows lst array)
@@ -22,20 +25,21 @@ Salidas:
 
 
 #|
-Nombre:
+Nombre: generate-array
 Descripción: Combina generate-columns y generate-rows para crear la matriz
-Entradas: 
-Salidas: 
+Entradas: rows: cantidad de filas que se desean
+          columns: cantidad de columnas que se desean
+Salidas: Retorna la matriz nxm solicitada
 |#
 (define (generate-array rows columns)
   (generate-rows rows (generate-columns columns '()) '()))
 
 
 #|
-Nombre:
+Nombre: is-full-row?
 Descripción: Revisa que no haya ceros en una lista especifica
-Entradas: 
-Salidas: 
+Entradas: row: la fila o lista que se va a valorar
+Salidas: true o false dependiendo de si la lista/fila solo contiene ceros
 |#
 (define (is-full-row? row)
   (cond
@@ -45,10 +49,10 @@ Salidas:
 
 
 #|
-Nombre:
+Nombre: is-full?
 Descripción: Utiliza el is-full-row? para revisar que todas las filas de la matriz no tengan cero
-Entradas: 
-Salidas: 
+Entradas: matrix: La matriz que se quiere revisar
+Salidas: true o false dependiendo si la matriz esta completamente llena o no
 |#
 (define (is-full? matrix)
   (cond
@@ -57,10 +61,11 @@ Salidas:
 
 
 #|
-Nombre:
+Nombre: is-empty-row?
 Descripción: Revisa si el elemento especificado en una fila es igual a cero
-Entradas: 
-Salidas: 
+Entradas: column: La columna en la que se ubica el elemento
+          row: la fila en la que se encuentra el elemento
+Salidas: true o false dependiendo de si el elemento es cero o no
 |#
 (define (is-empty-row? column row)
   (cond
@@ -69,10 +74,13 @@ Salidas:
 
 
 #|
-Nombre:
+Nombre: change-element
 Descripción: Cambia el valor en la posicion dada por otro elemento especificado y retorna la lista con el cambio
-Entradas: 
-Salidas: 
+Entradas: position: la posicion en la lista en la que se encuentra el elemento
+          element: el elemento por el que se quiere cambiar
+          listB: La lista inicial
+          listR: La lista con el cambio de elemento realizado
+Salidas: Una lista (listaR) con el cambio de elemento solicitado
 |#
 (define (change-element position element listB listR)
   (cond
@@ -81,20 +89,23 @@ Salidas:
 
 
 #|
-Nombre:
+Nombre: without-tail
 Descripción: Retorna una lista sin su ultimo elemento
-Entradas: 
-Salidas: 
+Entradas: lista: Una lista dada
+Salidas: La lista sin el ultimo elemento (la cola)
 |#
 (define (without-tail lista)
   (reverse(cdr(reverse lista))))
 
 
 #|
-Nombre:
+Nombre: add-token
 Descripción: Realiza el movimiento especificado por un jugador en la columna dada, retornando la matriz con la jugada realizada
-Entradas: 
-Salidas: 
+Entradas: column: La columna donde se quiere jugar una ficha
+          player: El jugador que este realizando la jugada (jugador 1 o jugador 2)
+          matrix: La matriz en la cual se esta jugando
+          matrixP: La matriz con la jugada realizada correspondientemente
+Salidas: Retorna la matriz con la jugada realizada de forma coherente (matrixP)
 |#
 (define (add-token column player matrix matrixP)
   (cond
@@ -149,10 +160,14 @@ Salidas: Elemento ubicado en la fila y columna proporcionada.
 
 
 #|
-Nombre:
-Descripción: Funcion
-Entradas: 
-Salidas: 
+Nombre: get-row-pos
+Descripción: Funcion que retorna el numero de fila en la que esta colocada la ultima ficha
+Entradas: column: columna en la que se quiere evaluar la funcion
+          matrix: La matriz que se quiere revisar o en la que se esta jugando
+          coord-row: El numero de fila de abajo hacia arriba, empieza en cero
+          flag: una bandera que indica si parar, inicia en false
+          rows: la cantidad de filas que tiene la matriz
+Salidas: Retorna el numero de fila en la que esta colocada la ultima ficha
 |#
 (define (get-row-pos column matrix coord-row flag rows)
   (cond
@@ -168,10 +183,13 @@ Salidas:
 
 
 #|
-Nombre:
-Descripción: Vertical
-Entradas: 
-Salidas: 
+Nombre: vertical-win
+Descripción: Revisa la cantidad de fichas verticalmente hacen un gane, o sea, forman 4
+Entradas: column: columna en la que se ubica la ficha
+          row: fila en la que se encuentra la ficha
+          matrix: matriz en la que se esta jugando
+          player: jugador del que se quiere revisar el gane
+Salidas: true o false dependiendo si existe un gane
 |#
 (define (vertical-win-up column row matrix cont player flag)
   (cond
@@ -194,10 +212,13 @@ Salidas:
 
 
 #|
-Nombre:
-Descripción: Horizontal
-Entradas: 
-Salidas: 
+Nombre: horizontal-win
+Descripción: Revisa la cantidad de fichas horizontalmente hacen un gane, o sea, forman 4
+Entradas: column: columna en la que se ubica la ficha
+          row: fila en la que se encuentra la ficha
+          matrix: matriz en la que se esta jugando
+          player: jugador del que se quiere revisar el gane
+Salidas: true o false dependiendo si detecta un gane
 |#
 (define (horizontal-win-up column row matrix cont player flag)
   (cond
@@ -220,10 +241,13 @@ Salidas:
 
 
 #|
-Nombre:
-Descripción:Diagonal par
-Entradas: 
-Salidas: 
+Nombre: pair-diagonal-win
+Descripción: Revisa la cantidad de fichas hacia la diagonal par hacen un gane, o sea, forman 4
+Entradas: column: columna en la que se ubica la ficha
+          row: fila en la que se encuentra la ficha
+          matrix: matriz en la que se esta jugando
+          player: jugador del que se quiere revisar el gane
+Salidas: true o false dependiendo si detecta un gane
 |#
 (define (pair-diagonal-win-up column row matrix cont player flag)
   (cond
@@ -246,10 +270,13 @@ Salidas:
 
 
 #|
-Nombre:
-Descripción: Diagonal impar
-Entradas: 
-Salidas: 
+Nombre: odd-diagonal-win
+Descripción: Revisa la cantidad de fichas hacia la diagonal impar hacen un gane, o sea, forman 4
+Entradas: column: columna en la que se ubica la ficha
+          row: fila en la que se encuentra la ficha
+          matrix: matriz en la que se esta jugando
+          player: jugador del que se quiere revisar el gane
+Salidas: true o false dependiendo si detecta un gane
 |#
 (define (odd-diagonal-win-up column row matrix cont player flag)
   (cond
@@ -272,10 +299,11 @@ Salidas:
 
 
 #|
-Nombre:
+Nombre: is-column-available?
 Descripción: Funcion que verifica si una columna esta disponible para insertar una ficha
-Entradas: 
-Salidas: 
+Entradas: matrix: La matriz en la que se esta jugando
+          columna: Columna a revisar disponibilidad
+Salidas: true o false dependiendo si la columna esta disponible
 |#
 (define (is-column-available? matrix column)
   (cond ((= (get-element-in column 1 matrix) 0) #t)
