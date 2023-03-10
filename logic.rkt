@@ -116,7 +116,7 @@ Salidas: newMatrix: Matriz actualizada con el nuevo elemento posicionado en la f
 
 (define (set-element-in-aux column row newElement matrix newMatrix)
   (cond ((null? matrix) newMatrix)
-        ((> row (length (car matrix))) null)
+        ((> row (length matrix)) null)
         ((> row 1) (set-element-in-aux column (- row 1) newElement (cdr matrix) (append newMatrix (list (car matrix)))))
         ((= row 1) (set-element-in-aux column (- row 1) newElement (cdr matrix) (append newMatrix (list (set-element-in-aux2 column (car matrix) newElement '())))))
         (else (set-element-in-aux column (- row 1) newElement (cdr matrix) (append newMatrix (list (car matrix)))))))
@@ -138,7 +138,7 @@ Entradas: column: Columna en la que se encuentra el elemento a consultar.
 Salidas: Elemento ubicado en la fila y columna proporcionada.
 |#
 (define (get-element-in column row matrix)
-  (cond ((or (null? matrix) (> row (length (car matrix))) (= row 0)) null)
+  (cond ((or (null? matrix) (> row (length matrix)) (= row 0)) null)
         ((> row 1) (get-element-in column (- row 1) (cdr matrix)))
         (else (get-element-in-aux column (car matrix)))))
 
