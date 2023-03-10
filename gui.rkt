@@ -11,9 +11,9 @@
 (define cols 8)
 (define play? #f)
 (define board '(()))
+(define previous-board '(()))
 (define current-row 0)
 (define current-col 0)
-(define current-panel 0)
 
 #|
 Nombre: set-player-name 
@@ -161,7 +161,7 @@ Salida: Primer ventana al iniciar el juego
     ; Botón para llamar a la ventana de información 
     (new button% [parent top-panel-right]
                  [label about-target]
-                 [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (about-window))])
+                 [callback (λ (b e) (about-window))])
     
     (define center-panel
         (new horizontal-panel% [parent start-panel] [alignment '(center center)]))
@@ -249,7 +249,7 @@ Salida: Primer ventana al iniciar el juego
     ; Botón para llamar a la ventana de juego
     (new button% [parent bottom-panel]
                  [label match-target]
-                 [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (on-play-button (send text-field get-value) (send combo-field get-value)))])
+                 [callback (λ (b e) (on-play-button (send text-field get-value) (send combo-field get-value)))])
 
     ; Función que valida el nombre del jugador y las dimensiones del tablero antes de iniciar la partida
     (define (on-play-button name dimensions)
@@ -284,7 +284,6 @@ Salida: Primer ventana al iniciar el juego
                         (send dc set-pen "white" 1 'transparent)
                         (send dc draw-rectangle rx ry (* rows 40) 40)
                         (send dc set-font (make-font #:size 16 #:family 'swiss))
-                        (define-values (w h d a) (send dc get-text-extent (car lst)))
                         (send dc set-text-foreground "black")
                         (send dc draw-text (car lst) (+ rx 12) (+ ry 6))
                         (add-column-number (cdr lst) (+ reps 1) (+ rx 40) ry))))
@@ -344,7 +343,6 @@ Salida: Primer ventana al iniciar el juego
                         (send dc set-pen "white" 1 'transparent)
                         (send dc draw-rectangle rx ry (* rows 40) 40)
                         (send dc set-font (make-font #:size 16 #:family 'swiss))
-                        (define-values (w h d a) (send dc get-text-extent (car lst)))
                         (send dc set-text-foreground "black")
                         (send dc draw-text (car lst) (+ rx 12) (+ ry 6))
                         (add-column-number (cdr lst) (+ reps 1) (+ rx 40) ry))))
@@ -428,7 +426,7 @@ Salida: Ventana de información
     (send back-dc draw-text "Back" (/ (- 50 wb) 2) (/ (- 25 hb) 2))
 
     ; Botón para regresar a la ventana de inicio
-    (new button%  [parent button-panel] [label back-target] [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send about-dialog show #f))])   
+    (new button%  [parent button-panel] [label back-target] [callback (λ (b e) (send about-dialog show #f))])   
         
     (send about-dialog show #t))
 
@@ -482,7 +480,7 @@ Salida: Dimension del tablero que puede ser distinta a las de default
     ; Botón para cerrar board-size-window
     (new button%  [parent bottom-panel]
                   [label ok-target]
-                  [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send board-size show #f))])
+                  [callback (λ (b e) (send board-size show #f))])
 
     (send board-size show #t))
 
@@ -512,14 +510,6 @@ Salida: Ventana de juego
               ((and (not pc) (equal? color-value 1)) "resources\\blue-token.png")
               ((and (not pc) (equal? color-value 2)) "resources\\white-token.png")))
 
-    ; Función que actualiza el tablero cuando el jugador o la PC agregan una ficha
-    (define (update-center-panel game-panel panel)
-        (send game-panel delete-child panel)
-        (define center-panel (new vertical-panel% [parent game-panel] [alignment '(left center)]))
-        (new message% [parent center-panel]
-                      [label (read-bitmap "resources\\init-board.png")])
-        (set! current-panel center-panel))
-
     ; Principal contenedor de la ventana
     (define game-pane
         (new pane% [parent game-window]))
@@ -548,7 +538,7 @@ Salida: Ventana de juego
     ; Botón para regresar a la ventana de inicio
     (new button% [parent left-panel-up]
                  [label back-target]
-                 [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send game-window show #f) (send start-window show #t))])
+                 [callback (λ (b e) (send game-window show #f) (send start-window show #t))])
 
     (define left-panel-center
         (new vertical-panel% [parent left-panel] [alignment '(center center)] [vert-margin 75]))
@@ -590,11 +580,17 @@ Salida: Ventana de juego
                     (if (and (not (send game-window is-enabled?)) (not play?)) (continue-playing) #t))
               (else (player-choice col-selection))))
 
+    ; Función para actualizar el tablero cuando el jugador agrega una ficha
     (define (player-choice col-selection)
+        ; Start the animation
+        (set! previous-board (add-token col-selection color-value board '()))
+        (set! current-row (get-row-pos col-selection previous-board 0 #f rows))
+        (set! previous-board (set-element-in col-selection current-row 0 previous-board))
+        (animation previous-board current-row col-selection 1 color-value)
+
         (update-board (add-token col-selection color-value board '()))
         (create-board)
-        (sleep/yield 0.01) (play-sound "resources\\add-token.wav" #t)
-        (update-center-panel game-panel current-panel)
+        (send board-image set-label (read-bitmap "resources\\init-board.png"))
         (set! current-row (get-row-pos col-selection board 0 #f rows))
         (cond ((win? col-selection current-row board color-value)
                     (sleep/yield 0.5)
@@ -609,6 +605,21 @@ Salida: Ventana de juego
               (else (sleep/yield 1.5)
                     (pc-choice (if (equal? color-value 1) 2 1)))))
 
+    ; Función que realiza la animacion de dejar caer la ficha en el tablero
+    (define (animation prev-board last-row column current-row token-color)
+        (cond ((equal? last-row current-row) #f)
+              (else (set! prev-board (set-element-in column current-row token-color prev-board)) 
+                    (update-board prev-board)
+                    (create-board)
+                    (send board-image set-label (read-bitmap "resources\\init-board.png"))
+                    (sleep/yield 0.05)
+                    (set! prev-board (set-element-in column current-row 0 prev-board))
+                    (update-board prev-board)
+                    (create-board)
+                    (send board-image set-label (read-bitmap "resources\\init-board.png"))
+                    (animation prev-board last-row column (+ current-row 1) token-color))))
+
+    ; Función para continuar jugando luego de haber aparecido la ventana que indica que una columna ya esta llena
     (define (continue-playing)
         (send game-window show #t) 
         (send game-window enable #t) 
@@ -628,12 +639,18 @@ Salida: Ventana de juego
 
     ; Función para actualizar el tablero cuando la PC agrega una ficha
     (define (pc-choice color-value-pc)
+        ; Start the animation
+        (set! previous-board (car (playsIA board color-value-pc)))
+        (set! current-col (caadr (playsIA board color-value-pc)))
+        (set! current-row (cadadr (playsIA board color-value-pc)))
+        (set! previous-board (set-element-in current-col current-row 0 previous-board))
+        (animation previous-board current-row current-col 1 color-value-pc)
+
         (set! current-col (caadr (playsIA board color-value-pc)))
         (set! current-row (cadadr (playsIA board color-value-pc)))
         (update-board (car (playsIA board color-value-pc)))
         (create-board)
-        (sleep/yield 0.01) (play-sound "resources\\add-token.wav" #t)
-        (update-center-panel game-panel current-panel)
+        (send board-image set-label (read-bitmap "resources\\init-board.png"))
         (cond ((win? current-col current-row board color-value-pc) 
                     (sleep/yield 0.5) 
                     (send game-window enable #f) 
@@ -650,9 +667,9 @@ Salida: Ventana de juego
         (new vertical-panel% [parent game-panel] [alignment '(left center)]))
     
     ; Agregar tablero vacio
-    (new message% [parent center-panel]
-                  [label (read-bitmap "resources\\init-board.png")])
-    (set! current-panel center-panel)
+    (define board-image
+        (new message% [parent center-panel]
+                      [label (read-bitmap "resources\\init-board.png")]))
 
     #|
     Nombre: winner-window
@@ -686,7 +703,7 @@ Salida: Ventana de juego
 
     (set! play? #f)
     ; Botón para regresar a la ventana de inicio
-    (new button% [parent h2-panel] [label play-target] [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send winner-dialog show #f) (set! play? #t) (play-again))])
+    (new button% [parent h2-panel] [label play-target] [callback (λ (b e) (send winner-dialog show #f) (set! play? #t) (play-again))])
 
     ; Bitmap para botón Exit
     (define exit-target (make-bitmap 190 30))
@@ -700,7 +717,7 @@ Salida: Ventana de juego
     (send exit-dc draw-text "Exit" (/ (- 190 we) 2) (/ (- 30 he) 2))
 
     ; Botón para cerrar el programa
-    (new button% [parent h2-panel] [label exit-target] [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send winner-dialog show #f) (set! play? #t) (send game-window show #f))])
+    (new button% [parent h2-panel] [label exit-target] [callback (λ (b e) (send winner-dialog show #f) (set! play? #t) (send game-window show #f))])
 
     (send winner-dialog show #t))
 
@@ -738,7 +755,7 @@ Salida: Ventana de juego
     ; Botón para cerrar board-size-window
     (new button%  [parent h2-panel]
                   [label ok-target]
-                  [callback (λ (b e) (sleep/yield 0.01) (play-sound "resources\\button.wav" #t) (send warning-dialog show #f) (set! play? #t) (send game-window show #t) (send game-window enable #t) (send choice1 enable #t))])
+                  [callback (λ (b e) (send warning-dialog show #f) (set! play? #t) (send game-window show #t) (send game-window enable #t) (send choice1 enable #t))])
 
     (send warning-dialog show #t))
 
