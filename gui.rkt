@@ -745,5 +745,3 @@ Salida: Ventana de juego
     (send game-window show #t))
 
 (send start-window show #t))
-
-(4Line)
